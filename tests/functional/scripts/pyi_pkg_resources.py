@@ -52,6 +52,14 @@ assert resource_exists(modname, 'submod/non-existant') == False
 # A source script file in top-level module
 assert resource_exists(modname, '__init__.py') == True
 
+# Parent of module's top-level directory
+# True for default provider, False for zipped egg.
+assert resource_exists(modname, '..') in [True, False]
+
+# Parent of submodule
+# True for default provider, False for zipped egg.
+assert resource_exists(modname + '.submod', '..') in [True, False]
+
 
 ########################################################################
 #                Validate behavior of resource_isdir()                 #
@@ -87,6 +95,14 @@ assert resource_isdir(modname, 'submod/non-existant') == False
 
 # A source script file in top-level module - should return False
 assert resource_isdir(modname, '__init__.py') == False
+
+# Parent of module's top-level directory
+# True for default provider, False for zipped egg.
+assert resource_isdir(modname, '..') in [True, False]
+
+# Parent of submodule
+# True for default provider, False for zipped egg.
+assert resource_isdir(modname + '.submod', '..') in [True, False]
 
 
 ########################################################################
@@ -162,3 +178,21 @@ except:
     raise
 else:
     assert content == [], "Expected FileNotFoundError or empty list!"
+
+
+# Attempt to list module's parent
+# With default provider, this actually lists the parent directory.
+# With zipped egg, it returns empty list.
+content = resource_listdir(modname, '..')
+content = set(content)
+assert modname in content or content == set()
+
+# Attempt to list submodule's parent
+# With default provider, this actually lists the parent directory.
+# With zipped egg, it returns empty list.
+expected = {'__init__.py', 'submod'}
+content = resource_listdir(modname + '.submod', '..')
+content = set(content)
+if '__pycache__' in content:
+    content.remove('__pycache__')  # ignore __pycache__
+assert content == expected or content == set()

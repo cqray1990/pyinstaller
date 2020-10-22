@@ -1,6 +1,5 @@
-modname = 'pyi_pkgres_testmod'
-
 from pkg_resources import resource_exists, resource_isdir, resource_listdir
+modname = 'pyi_pkgres_testmod'
 
 ########################################################################
 # The test module/package has the following structure:
@@ -16,19 +15,35 @@ from pkg_resources import resource_exists, resource_isdir, resource_listdir
 #     │       └── extra_entry1.txt
 #     └── __init__.py
 
+# When run as native python script, this script can be used to check the
+# behavior of "native" providers that come with pkg_resources, e.g.,
+# DefaultProvider (for regular modules/packages) and ZipProvider (for
+# eggs).
+#
+# When run as a frozen application, this script validates the behavior
+# of the frozen provider implemented by PyInstaller. Due to transitivity
+# of test results, this script running without errors both as a native
+# script and as a frozen application serves as proof of conformance for
+# the PyInstaller's provider.
+#
+# Wherever the behavior between the native providers is inconsistent,
+# we allow the same leeway for the PyInstaller's frozen provider.
 
 ########################################################################
 #                Validate behavior of resource_exists()                #
 ########################################################################
-# Module's top-level directory: returns true for default provider,
-# false for zipped egg. So allow either...
+# Module's directory
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_exists(modname, '.') in [True, False]
 
-# Submodule's directory: accessing it from top-level module returns
-# True for both default and zipped egg provider. Accessing it from the
-# submodule itself, however, returns True and False for default and egg,
-# respectively.
+# Submodule's directory (relative to module):
+#  * both DefaultProvider and ZipProvider return True
 assert resource_exists(modname, 'submod') == True
+
+# Submodule directory (relative to submodule):
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_exists(modname + '.submod', '.') in [True, False]
 
 # Data directory in submodule
@@ -53,26 +68,31 @@ assert resource_exists(modname, 'submod/non-existant') == False
 assert resource_exists(modname, '__init__.py') == True
 
 # Parent of module's top-level directory
-# True for default provider, False for zipped egg.
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_exists(modname, '..') in [True, False]
 
 # Parent of submodule
-# True for default provider, False for zipped egg.
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_exists(modname + '.submod', '..') in [True, False]
 
 
 ########################################################################
 #                Validate behavior of resource_isdir()                 #
 ########################################################################
-# Module's top-level directory: returns true for default provider,
-# false for zipped egg. So allow either...
+# Module's directory
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_isdir(modname, '.') in [True, False]
 
-# Submodule's directory: accessing it from top-level module returns
-# True for both default and zipped egg provider. Accessing it from the
-# submodule itself, however, returns True and False for default and egg,
-# respectively.
+# Submodule's directory (relative to module):
+#  * both DefaultProvider and ZipProvider return True
 assert resource_isdir(modname, 'submod') == True
+
+# Submodule directory (relative to submodule):
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_isdir(modname + '.submod', '.') in [True, False]
 
 # Data directory in submodule
@@ -97,19 +117,22 @@ assert resource_isdir(modname, 'submod/non-existant') == False
 assert resource_isdir(modname, '__init__.py') == False
 
 # Parent of module's top-level directory
-# True for default provider, False for zipped egg.
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_isdir(modname, '..') in [True, False]
 
 # Parent of submodule
-# True for default provider, False for zipped egg.
+#  * DefaultProvider returns True
+#  * ZipProvider returns False
 assert resource_isdir(modname + '.submod', '..') in [True, False]
 
 
 ########################################################################
 #               Validate behavior of resource_listdir()                #
 ########################################################################
-# List module's top-level directory: default provider lists content,
-# while zipped egg returns empty list. So allow either...
+# List module's top-level directory
+#  * DefaultProvider lists the directory
+#  * ZipProvider returns empty list
 expected = {'__init__.py', 'submod'}
 content = resource_listdir(modname, '.')
 content = set(content)
@@ -142,9 +165,9 @@ content = set(content)
 assert content == expected
 
 
-# Attempt to list a file (existing resource but not a directory). With
-# default provider, this raises NotADirectoryError, while zipped egg
-# returns empty list
+# Attempt to list a file (existing resource but not a directory).
+#  * DefaultProvider raises NotADirectoryError
+#  * ZipProvider returns empty list
 try:
     content = resource_listdir(modname + '.submod', 'data/entry1.txt')
 except NotADirectoryError:
@@ -155,9 +178,9 @@ else:
     assert content == [], "Expected NotADirectoryError or empty list!"
 
 
-# Attempt to list an non-existant directory in main module. With default
-# provider, this raises FileNotFoundError, while zipped egg returns
-# empty list
+# Attempt to list an non-existant directory in main module.
+#  * DefaultProvider raises FileNotFoundError
+#  * ZipProvider returns empty list
 try:
     content = resource_listdir(modname, 'non-existant')
 except FileNotFoundError:
@@ -167,9 +190,9 @@ except:
 else:
     assert content == [], "Expected FileNotFoundError or empty list!"
 
-# Attempt to list an non-existant directory in submodule. With default
-# provider, this raises FileNotFoundError, while zipped egg returns
-# empty list
+# Attempt to list an non-existant directory in submodule
+#  * DefaultProvider raises FileNotFoundError
+#  * ZipProvider returns empty list
 try:
     content = resource_listdir(modname + '.submod', 'data/non-existant')
 except FileNotFoundError:
@@ -181,15 +204,15 @@ else:
 
 
 # Attempt to list module's parent
-# With default provider, this actually lists the parent directory.
-# With zipped egg, it returns empty list.
+#  * DefaultProvider actually lists the parent directory
+#  * ZipProvider returns empty list
 content = resource_listdir(modname, '..')
 content = set(content)
 assert modname in content or content == set()
 
 # Attempt to list submodule's parent
-# With default provider, this actually lists the parent directory.
-# With zipped egg, it returns empty list.
+#  * DefaultProvider actually lists the parent directory
+#  * ZipProvider returns empty list
 expected = {'__init__.py', 'submod'}
 content = resource_listdir(modname + '.submod', '..')
 content = set(content)

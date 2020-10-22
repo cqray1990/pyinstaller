@@ -71,5 +71,13 @@ def test_pkg_resources_content_listing(pyi_builder, monkeypatch, module_type, sc
     assert __exec_python_script(os.path.join(script_dir, test_script), pathex=pathex) == 0, "Failed to run test script in native mode!"
 
     # Run the test script as a frozen program
-    #print("Running test script as frozen program...", file=sys.stderr)
-    #pyi_builder.test_script(test_script, pyi_args=['--paths', pathex, '--hidden-import', 'pyi_pkgres_testmod'])
+    print("Running test script as frozen program...", file=sys.stderr)
+
+    hooks_dir = os.path.join(_MODULES_DIR,
+                             'pyi-pkg-resources-test-modules',
+                             'hooks')
+
+    pyi_builder.test_script(test_script, pyi_args=[
+        '--paths', pathex,
+        '--hidden-import', 'pyi_pkgres_testmod',
+        '--additional-hooks-dir', hooks_dir])

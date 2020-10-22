@@ -126,6 +126,19 @@ content = set(content)
 assert content == expected
 
 
+# Attempt to list a file (existing resource but not a directory). With
+# default provider, this raises NotADirectoryError, while zipped egg
+# returns empty list
+try:
+    content = resource_listdir(modname + '.submod', 'data/entry1.txt')
+except NotADirectoryError:
+    pass  # good
+except:
+    raise
+else:
+    assert content == [], "Expected NotADirectoryError or empty list!"
+
+
 # Attempt to list an non-existant directory in main module. With default
 # provider, this raises FileNotFoundError, while zipped egg returns
 # empty list

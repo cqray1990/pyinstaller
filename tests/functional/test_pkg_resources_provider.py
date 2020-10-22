@@ -45,9 +45,7 @@ def __exec_python_script(script_filename, *args, pathex=None):
 
     return exec_python_rc(*cmd, env=env)
 
-@importorskip('pkg_resources')
-@pytest.mark.parametrize('module_type', ['module', 'egg', 'zipped-egg'])
-def test_pkg_resources_content_listing(pyi_builder, monkeypatch, module_type, script_dir):
+def __get_test_module_path(module_type):
     # Same test module, in three different formats
     if module_type == 'module':
         pathex = os.path.join(_MODULES_DIR,
@@ -62,16 +60,23 @@ def test_pkg_resources_content_listing(pyi_builder, monkeypatch, module_type, sc
                               'pyi-pkg-resources-test-modules',
                               'egg-zipped.egg')
 
+    return pathex
+
+@importorskip('pkg_resources')
+@pytest.mark.parametrize('module_type', ['module', 'egg', 'zipped-egg'])
+def test_pkg_resources_provider_native(module_type, script_dir):
+    # Run the test script as native python script
+    pathex = __get_test_module_path(module_type)
     test_script = 'pyi_pkg_resources.py'
 
-    #print("Test module search path: {}".format(pathex))
+    assert __exec_python_script(os.path.join(script_dir, test_script), pathex=pathex) == 0, "Failed to run native test script!"
 
-    # Run the test script as native python script
-    print("Running test script as native script...", file=sys.stderr)
-    assert __exec_python_script(os.path.join(script_dir, test_script), pathex=pathex) == 0, "Failed to run test script in native mode!"
-
+@importorskip('pkg_resources')
+@pytest.mark.parametrize('module_type', ['module', 'egg', 'zipped-egg'])
+def test_pkg_resources_provider_frozen(pyi_builder, module_type, script_dir):
     # Run the test script as a frozen program
-    print("Running test script as frozen program...", file=sys.stderr)
+    pathex = __get_test_module_path(module_type)
+    test_script = 'pyi_pkg_resources.py'
 
     hooks_dir = os.path.join(_MODULES_DIR,
                              'pyi-pkg-resources-test-modules',
@@ -80,4 +85,5 @@ def test_pkg_resources_content_listing(pyi_builder, monkeypatch, module_type, sc
     pyi_builder.test_script(test_script, pyi_args=[
         '--paths', pathex,
         '--hidden-import', 'pyi_pkgres_testmod',
-        '--additional-hooks-dir', hooks_dir])
+        '--additional-hooks-dir', hooks_dir]
+    )

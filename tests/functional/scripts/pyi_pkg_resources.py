@@ -29,6 +29,7 @@ modname = 'pyi_pkgres_testmod'
 # Wherever the behavior between the native providers is inconsistent,
 # we allow the same leeway for the PyInstaller's frozen provider.
 
+
 ########################################################################
 #                Validate behavior of resource_exists()                #
 ########################################################################
@@ -53,7 +54,18 @@ assert resource_exists(modname + '.submod', 'data') == True
 # Subdirectory in data directory
 assert resource_exists(modname, 'submod/data/extra') == True
 assert resource_exists(modname + '.submod', 'data/extra') == True
-#assert resource_exists(modname + '.submod.data', 'extra') == True
+
+# Subdirectory in data directory (invalid module name)
+try:
+    resource_exists(modname + '.submod.data', 'extra')
+except TypeError:
+    pass
+except ModuleNotFoundError:
+    pass
+except:
+    raise
+else:
+    assert content == [], "Expected ModuleNotFoundError or TypeError!"
 
 # File in data directory
 assert resource_exists(modname, 'submod/data/entry1.txt') == True
@@ -102,7 +114,20 @@ assert resource_isdir(modname + '.submod', 'data') == True
 # Subdirectory in data directory
 assert resource_isdir(modname, 'submod/data/extra') == True
 assert resource_isdir(modname + '.submod', 'data/extra') == True
-#assert resource_isdir(modname + '.submod.data', 'extra') == True
+
+# Subdirectory in data directory (invalid module name)
+#  * DefaultProvider raises TypeError
+#  * ZipProvider raises ModuleNotFoundError
+try:
+    resource_isdir(modname + '.submod.data', 'extra')
+except TypeError:
+    pass
+except ModuleNotFoundError:
+    pass
+except:
+    raise
+else:
+    assert content == [], "Expected ModuleNotFoundError or TypeError!"
 
 # File in data directory - should return False
 assert resource_isdir(modname, 'submod/data/entry1.txt') == False
@@ -159,6 +184,7 @@ content = resource_listdir(modname + '.submod', 'data')
 content = set(content)
 assert content == expected
 
+# List data in subdirectory of data directory in submodule
 expected = {'extra_entry1.txt'}
 content = resource_listdir(modname + '.submod', 'data/extra')
 content = set(content)

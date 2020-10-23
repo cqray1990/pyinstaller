@@ -1,7 +1,17 @@
-from pkg_resources import resource_exists, resource_isdir, resource_listdir
-modname = 'pyi_pkgres_testmod'
+# -*- coding: utf-8 -*-
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, PyInstaller Development Team.
+#
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
+#
+# The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
+#-----------------------------------------------------------------------------
 
-########################################################################
+# A test script for validation of pkg_resources provider implementation.
+#
 # The test module/package has the following structure:
 #
 # pyi_pkgres_testmod
@@ -29,6 +39,20 @@ modname = 'pyi_pkgres_testmod'
 # Wherever the behavior between the native providers is inconsistent,
 # we allow the same leeway for the PyInstaller's frozen provider.
 
+import sys
+from pkg_resources import resource_exists, resource_isdir, resource_listdir
+from pkg_resources import get_provider, DefaultProvider, ZipProvider
+
+modname = 'pyi_pkgres_testmod'
+
+# Identify provider type
+provider = get_provider(modname)
+is_default = isinstance(provider, DefaultProvider)
+is_zip = isinstance(provider, ZipProvider)
+is_frozen = getattr(sys, 'frozen', False)
+
+assert any([is_default, is_zip, is_frozen]), "Unsupported provider type!"
+
 
 ########################################################################
 #                Validate behavior of resource_exists()                #
@@ -36,7 +60,9 @@ modname = 'pyi_pkgres_testmod'
 # Module's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_exists(modname, '.') in [True, False]
+ret = resource_exists(modname, '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 # Submodule's directory (relative to module):
 #  * both DefaultProvider and ZipProvider return True
@@ -45,7 +71,9 @@ assert resource_exists(modname, 'submod') == True
 # Submodule directory (relative to submodule):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_exists(modname + '.submod', '.') in [True, False]
+ret = resource_exists(modname + '.submod', '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 # Data directory in submodule
 assert resource_exists(modname, 'submod/data') == True
@@ -56,16 +84,18 @@ assert resource_exists(modname, 'submod/data/extra') == True
 assert resource_exists(modname + '.submod', 'data/extra') == True
 
 # Subdirectory in data directory (invalid module name)
+#  * DefaultProvider raises TypeError
+#  * ZipProvider raises ModuleNotFoundError
 try:
     resource_exists(modname + '.submod.data', 'extra')
 except TypeError:
-    pass
+    assert is_default
 except ModuleNotFoundError:
-    pass
+    assert is_zip
 except:
     raise
 else:
-    assert content == [], "Expected ModuleNotFoundError or TypeError!"
+    assert False
 
 # File in data directory
 assert resource_exists(modname, 'submod/data/entry1.txt') == True
@@ -82,12 +112,16 @@ assert resource_exists(modname, '__init__.py') == True
 # Parent of module's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_exists(modname, '..') in [True, False]
+ret = resource_exists(modname, '..')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 # Parent of submodule
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_exists(modname + '.submod', '..') in [True, False]
+ret = resource_exists(modname + '.submod', '..')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 
 ########################################################################
@@ -96,7 +130,9 @@ assert resource_exists(modname + '.submod', '..') in [True, False]
 # Module's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_isdir(modname, '.') in [True, False]
+ret = resource_isdir(modname, '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 # Submodule's directory (relative to module):
 #  * both DefaultProvider and ZipProvider return True
@@ -105,7 +141,9 @@ assert resource_isdir(modname, 'submod') == True
 # Submodule directory (relative to submodule):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_isdir(modname + '.submod', '.') in [True, False]
+ret = resource_isdir(modname + '.submod', '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 # Data directory in submodule
 assert resource_isdir(modname, 'submod/data') == True
@@ -121,13 +159,13 @@ assert resource_isdir(modname + '.submod', 'data/extra') == True
 try:
     resource_isdir(modname + '.submod.data', 'extra')
 except TypeError:
-    pass
+    assert is_default
 except ModuleNotFoundError:
-    pass
+    assert is_zip
 except:
     raise
 else:
-    assert content == [], "Expected ModuleNotFoundError or TypeError!"
+    assert False
 
 # File in data directory - should return False
 assert resource_isdir(modname, 'submod/data/entry1.txt') == False
@@ -144,12 +182,16 @@ assert resource_isdir(modname, '__init__.py') == False
 # Parent of module's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_isdir(modname, '..') in [True, False]
+ret = resource_isdir(modname, '..')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 # Parent of submodule
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-assert resource_isdir(modname + '.submod', '..') in [True, False]
+ret = resource_isdir(modname + '.submod', '..')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
 
 
 ########################################################################
@@ -159,35 +201,47 @@ assert resource_isdir(modname + '.submod', '..') in [True, False]
 #  * DefaultProvider lists the directory
 #  * ZipProvider returns empty list
 expected = {'__init__.py', 'submod'}
+
 content = resource_listdir(modname, '.')
 content = set(content)
+
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-assert content == expected or content == set()
+
+assert (is_default and content == expected) or \
+       (is_zip and content == set())
 
 # List submodule directory
 expected = {'__init__.py', 'data'}
+
 content = resource_listdir(modname, 'submod')
+content = set(content)
+
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-content = set(content)
+
 assert content == expected
 
-# List data directory in submodule
+# List data directory in submodule (relative to module)
 expected = {'entry1.txt', 'entry2.txt', 'entry3.txt', 'extra'}
 
 content = resource_listdir(modname, 'submod/data')
 content = set(content)
+
 assert content == expected
 
+# List data directory in submodule (relative to submodule)
 content = resource_listdir(modname + '.submod', 'data')
 content = set(content)
+
 assert content == expected
 
 # List data in subdirectory of data directory in submodule
 expected = {'extra_entry1.txt'}
+
 content = resource_listdir(modname + '.submod', 'data/extra')
 content = set(content)
+
 assert content == expected
 
 
@@ -197,11 +251,11 @@ assert content == expected
 try:
     content = resource_listdir(modname + '.submod', 'data/entry1.txt')
 except NotADirectoryError:
-    pass  # good
+    assert is_default
 except:
     raise
 else:
-    assert content == [], "Expected NotADirectoryError or empty list!"
+    assert is_zip and content == []
 
 
 # Attempt to list an non-existant directory in main module.
@@ -210,11 +264,11 @@ else:
 try:
     content = resource_listdir(modname, 'non-existant')
 except FileNotFoundError:
-    pass  # good
+    assert is_default
 except:
     raise
 else:
-    assert content == [], "Expected FileNotFoundError or empty list!"
+    assert is_zip and content == []
 
 # Attempt to list an non-existant directory in submodule
 #  * DefaultProvider raises FileNotFoundError
@@ -222,11 +276,11 @@ else:
 try:
     content = resource_listdir(modname + '.submod', 'data/non-existant')
 except FileNotFoundError:
-    pass  # good
+    assert is_default
 except:
     raise
 else:
-    assert content == [], "Expected FileNotFoundError or empty list!"
+    assert is_zip and content == []
 
 
 # Attempt to list module's parent
@@ -234,14 +288,20 @@ else:
 #  * ZipProvider returns empty list
 content = resource_listdir(modname, '..')
 content = set(content)
-assert modname in content or content == set()
+
+assert (is_default and modname in content) or \
+       (is_zip and content == set())
 
 # Attempt to list submodule's parent
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
 expected = {'__init__.py', 'submod'}
+
 content = resource_listdir(modname + '.submod', '..')
 content = set(content)
+
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-assert content == expected or content == set()
+
+assert (is_default and content == expected) or \
+       (is_zip and content == set())

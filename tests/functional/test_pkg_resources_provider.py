@@ -48,11 +48,11 @@ def __get_test_module_path(module_type):
     # Same test module, in three different formats
     if module_type == 'module':
         pathex = os.path.join(_MODULES_DIR,
-                              'pyi-pkg-resources-test-modules',
+                              'pyi_pkg_resources_provider',
                               'module')
     elif module_type == 'egg':
         pathex = os.path.join(_MODULES_DIR,
-                              'pyi-pkg-resources-test-modules',
+                              'pyi_pkg_resources_provider',
                               'egg-zipped.egg')
 
     return pathex

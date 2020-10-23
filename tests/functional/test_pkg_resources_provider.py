@@ -59,19 +59,21 @@ def __get_test_module_path(module_type):
 
 @importorskip('pkg_resources')
 @pytest.mark.parametrize('module_type', ['module', 'egg'])
-def test_pkg_resources_provider_native(module_type, script_dir):
-    # Run the test script as native python script
+def test_pkg_resources_provider_source(module_type, script_dir):
+    # Run the source python test script
     pathex = __get_test_module_path(module_type)
-    test_script = 'pyi_pkg_resources.py'
+    test_script = 'pyi_pkg_resources_provider.py'
 
-    assert __exec_python_script(os.path.join(script_dir, test_script), pathex=pathex) == 0, "Failed to run native test script!"
+    test_script = os.path.join(script_dir, test_script)
+    ret = __exec_python_script(test_script, pathex=pathex)
+    assert ret == 0, "Test script failed!"
 
 @importorskip('pkg_resources')
 @pytest.mark.parametrize('module_type', ['module', 'egg'])
 def test_pkg_resources_provider_frozen(pyi_builder, module_type, script_dir):
     # Run the test script as a frozen program
     pathex = __get_test_module_path(module_type)
-    test_script = 'pyi_pkg_resources.py'
+    test_script = 'pyi_pkg_resources_provider.py'
 
     hooks_dir = os.path.join(_MODULES_DIR,
                              'pyi-pkg-resources-test-modules',

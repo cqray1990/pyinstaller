@@ -76,7 +76,7 @@ def test_pkg_resources_provider_frozen(pyi_builder, module_type, script_dir):
     test_script = 'pyi_pkg_resources_provider.py'
 
     hooks_dir = os.path.join(_MODULES_DIR,
-                             'pyi-pkg-resources-test-modules',
+                             'pyi_pkg_resources_provider',
                              'hooks')
 
     pyi_builder.test_script(test_script, pyi_args=[

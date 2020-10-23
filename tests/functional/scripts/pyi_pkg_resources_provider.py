@@ -12,23 +12,34 @@
 
 # A test script for validation of pkg_resources provider implementation.
 #
-# The test module/package has the following structure:
+# The test package has the following structure:
 #
-# pyi_pkgres_testmod
+# pyi_pkgres_testpkg/
+# ├── a.py
+# ├── b.py
 # ├── __init__.py
-# └── submod
-#     ├── data
-#     │   ├── entry1.txt
-#     │   ├── entry2.txt
-#     │   ├── entry3.txt
-#     │   └── extra
-#     │       └── extra_entry1.txt
+# ├── subpkg1
+# │   ├── c.py
+# │   ├── data
+# │   │   ├── entry1.txt
+# │   │   ├── entry2.txt
+# │   │   ├── entry3.txt
+# │   │   └── extra
+# │   │       └── extra_entry1.txt
+# │   ├── d.py
+# │   └── __init__.py
+# ├── subpkg2
+# │   ├── __init__.py
+# │   └── subsubpkg21
+# │       └── __init__.py
+# └── subpkg3
+#     ├── _datafile.txt
 #     └── __init__.py
+
 
 # When run as native python script, this script can be used to check the
 # behavior of "native" providers that come with pkg_resources, e.g.,
-# DefaultProvider (for regular modules/packages) and ZipProvider (for
-# eggs).
+# DefaultProvider (for regular packages) and ZipProvider (for eggs).
 #
 # When run as a frozen application, this script validates the behavior
 # of the frozen provider implemented by PyInstaller. Due to transitivity
@@ -43,10 +54,10 @@ import sys
 from pkg_resources import resource_exists, resource_isdir, resource_listdir
 from pkg_resources import get_provider, DefaultProvider, ZipProvider
 
-modname = 'pyi_pkgres_testmod'
+pkgname = 'pyi_pkgres_testpkg'
 
 # Identify provider type
-provider = get_provider(modname)
+provider = get_provider(pkgname)
 is_default = isinstance(provider, DefaultProvider)
 is_zip = isinstance(provider, ZipProvider)
 is_frozen = getattr(sys, 'frozen', False)
@@ -57,84 +68,70 @@ assert any([is_default, is_zip, is_frozen]), "Unsupported provider type!"
 ########################################################################
 #                Validate behavior of resource_exists()                #
 ########################################################################
-# Module's directory
+# Package's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
-ret = resource_exists(modname, '.')
+ret = resource_exists(pkgname, '.')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen and ret == True)
 
-# Submodule's directory (relative to module):
-#  * both DefaultProvider and ZipProvider return True
-assert resource_exists(modname, 'submod') == True
+# Subpackage's directory (relative to package):
+assert resource_exists(pkgname, 'subpkg1') == True
+assert resource_exists(pkgname, 'subpkg2') == True or is_frozen  # FIXME: frozen!
+assert resource_exists(pkgname, 'subpkg2/subsubpkg21') == True or is_frozen  # FIXME: frozen!
+assert resource_exists(pkgname, 'subpkg3') == True
 
-# Submodule directory (relative to submodule):
+# Subpackage's directory (relative to subpackage itself):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
-ret = resource_exists(modname + '.submod', '.')
+ret = resource_exists(pkgname + '.subpkg1', '.')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen and ret == True)
 
-# Data directory in submodule
-assert resource_exists(modname, 'submod/data') == True
-assert resource_exists(modname + '.submod', 'data') == True
+# Data directory in subpackage
+assert resource_exists(pkgname, 'subpkg1/data') == True
+assert resource_exists(pkgname + '.subpkg1', 'data') == True
 
 # Subdirectory in data directory
-assert resource_exists(modname, 'submod/data/extra') == True
-assert resource_exists(modname + '.submod', 'data/extra') == True
-
-# Subdirectory in data directory (invalid module name)
-#  * DefaultProvider raises TypeError
-#  * ZipProvider raises ModuleNotFoundError
-#  > with PyiFrozenProvider, we may get either - however, this behavior
-#    depends on the underlying module loader, not the provider!
-try:
-    resource_exists(modname + '.submod.data', 'extra')
-except TypeError:
-    assert is_default or is_frozen
-except ModuleNotFoundError:
-    assert is_zip or is_frozen
-except:
-    raise
-else:
-    assert False
+assert resource_exists(pkgname, 'subpkg1/data/extra') == True
+assert resource_exists(pkgname + '.subpkg1', 'data/extra') == True
 
 # File in data directory
-assert resource_exists(modname, 'submod/data/entry1.txt') == True
+assert resource_exists(pkgname, 'subpkg1/data/entry1.txt') == True
 
 # Deeply nested data file
-assert resource_exists(modname, 'submod/data/extra/extra_entry1.txt') == True
+assert resource_exists(pkgname, 'subpkg1/data/extra/extra_entry1.txt') == True
 
 # A non-existant file/directory - should return False
-assert resource_exists(modname, 'submod/non-existant') == False
+assert resource_exists(pkgname, 'subpkg1/non-existant') == False
 
-# A source script file in top-level module
+# A source script file in package
 #  > PyiFrozenProvider returns False because frozen application does
 #    not contain source files
-ret = resource_exists(modname, '__init__.py')
+ret = resource_exists(pkgname, '__init__.py')
 assert (not is_frozen and ret == True) or \
        (is_frozen and ret == False)
 
-# Parent of module's top-level directory
+# Parent of pacakge's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider currently returns either, depending on whether
-#    module's directory exists only as embedded resource or also on filesystem
-ret = resource_exists(modname, '..')
+#    package's directory exists only as embedded resource or also on filesystem
+ret = resource_exists(pkgname, '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
 
-# Parent of submodule
+# Parent of sub-package's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider currently returns either, depending on whether
-#    module's directory exists only as embedded resource or also on filesystem
-ret = resource_exists(modname + '.submod', '..')
+#    package's directory exists only as embedded resource or also on filesystem
+ret = resource_exists(pkgname + '.subpkg1', '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
@@ -143,81 +140,66 @@ assert (is_default and ret == True) or \
 ########################################################################
 #                Validate behavior of resource_isdir()                 #
 ########################################################################
-# Module's directory
+# Package's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
-ret = resource_isdir(modname, '.')
+ret = resource_isdir(pkgname, '.')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen and ret == True)
 
-# Submodule's directory (relative to module):
+# Subpackage's directory (relative to pacakge):
 #  * both DefaultProvider and ZipProvider return True
-assert resource_isdir(modname, 'submod') == True
+assert resource_isdir(pkgname, 'subpkg1') == True
 
-# Submodule directory (relative to submodule):
+# Subpackage's directory (relative to subpackage itself):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-#  > with PyiFrozenProvider, we may get either - however, this behavior
-#    depends on the underlying module loader, not the provider!
-ret = resource_isdir(modname + '.submod', '.')
+#  > PyiFrozenProvider returns True
+ret = resource_isdir(pkgname + '.subpkg1', '.')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen and ret == True)
 
-# Data directory in submodule
-assert resource_isdir(modname, 'submod/data') == True
-assert resource_isdir(modname + '.submod', 'data') == True
+# Data directory in subpackage
+assert resource_isdir(pkgname, 'subpkg1/data') == True
+assert resource_isdir(pkgname + '.subpkg1', 'data') == True
 
 # Subdirectory in data directory
-assert resource_isdir(modname, 'submod/data/extra') == True
-assert resource_isdir(modname + '.submod', 'data/extra') == True
-
-# Subdirectory in data directory (invalid module name)
-#  * DefaultProvider raises TypeError
-#  * ZipProvider raises ModuleNotFoundError
-try:
-    resource_isdir(modname + '.submod.data', 'extra')
-except TypeError:
-    assert is_default or is_frozen
-except ModuleNotFoundError:
-    assert is_zip or is_frozen
-except:
-    raise
-else:
-    assert False
+assert resource_isdir(pkgname, 'subpkg1/data/extra') == True
+assert resource_isdir(pkgname + '.subpkg1', 'data/extra') == True
 
 # File in data directory - should return False
-assert resource_isdir(modname, 'submod/data/entry1.txt') == False
+assert resource_isdir(pkgname, 'subpkg1/data/entry1.txt') == False
 
 # Deeply nested data file - should return False
-assert resource_isdir(modname, 'submod/data/extra/extra_entry1.txt') == False
+assert resource_isdir(pkgname, 'subpkg1/data/extra/extra_entry1.txt') == False
 
 # A non-existant file-directory - should return False
-assert resource_isdir(modname, 'submod/non-existant') == False
+assert resource_isdir(pkgname, 'subpkg1/non-existant') == False
 
-# A source script file in top-level module - should return False
+# A source script file in package - should return False
 # NOTE: PyFrozenProvider returns False because the file does not
 # exist.
-assert resource_isdir(modname, '__init__.py') == False
+assert resource_isdir(pkgname, '__init__.py') == False
 
-# Parent of module's top-level directory
+# Parent of package's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider currently returns either, depending on whether
 #    directory exists only as embedded resource or also on filesystem
-ret = resource_isdir(modname, '..')
+ret = resource_isdir(pkgname, '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
 
-# Parent of submodule
+# Parent of subpacakge's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider currently returns either, depending on whether
 #    directory exists only as embedded resource or also on filesystem
-ret = resource_isdir(modname + '.submod', '..')
+ret = resource_isdir(pkgname + '.subpkg1', '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
@@ -226,17 +208,18 @@ assert (is_default and ret == True) or \
 ########################################################################
 #               Validate behavior of resource_listdir()                #
 ########################################################################
-# List module's top-level directory
+# List package's top-level directory
 #  * DefaultProvider lists the directory
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
-expected = {'__init__.py', 'submod'}
+expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
 
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
+    expected.remove('subpkg2')  # FIXME
 
-content = resource_listdir(modname, '.')
+content = resource_listdir(pkgname, '.')
 content = set(content)
 
 if '__pycache__' in content:
@@ -246,15 +229,15 @@ assert (is_default and content == expected) or \
        (is_zip and content == set()) or \
        (is_frozen and content == expected)
 
-# List submodule directory
+# List subpackage's directory
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
-expected = {'__init__.py', 'data'}
+expected = {'__init__.py', 'c.py', 'd.py', 'data'}
 
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
 
-content = resource_listdir(modname, 'submod')
+content = resource_listdir(pkgname, 'subpkg1')
 content = set(content)
 
 if '__pycache__' in content:
@@ -262,24 +245,24 @@ if '__pycache__' in content:
 
 assert content == expected
 
-# List data directory in submodule (relative to module)
+# List data directory in subpackage (relative to package)
 expected = {'entry1.txt', 'entry2.txt', 'entry3.txt', 'extra'}
 
-content = resource_listdir(modname, 'submod/data')
+content = resource_listdir(pkgname, 'subpkg1/data')
 content = set(content)
 
 assert content == expected
 
-# List data directory in submodule (relative to submodule)
-content = resource_listdir(modname + '.submod', 'data')
+# List data directory in subpackage (relative to subpackage itself)
+content = resource_listdir(pkgname + '.subpkg1', 'data')
 content = set(content)
 
 assert content == expected
 
-# List data in subdirectory of data directory in submodule
+# List data in subdirectory of data directory in subpackage
 expected = {'extra_entry1.txt'}
 
-content = resource_listdir(modname + '.submod', 'data/extra')
+content = resource_listdir(pkgname + '.subpkg1', 'data/extra')
 content = set(content)
 
 assert content == expected
@@ -290,7 +273,7 @@ assert content == expected
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider returns empty list
 try:
-    content = resource_listdir(modname + '.submod', 'data/entry1.txt')
+    content = resource_listdir(pkgname + '.subpkg1', 'data/entry1.txt')
 except NotADirectoryError:
     assert is_default
 except:
@@ -304,7 +287,7 @@ else:
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider returns empty list
 try:
-    content = resource_listdir(modname, 'non-existant')
+    content = resource_listdir(pkgname, 'non-existant')
 except FileNotFoundError:
     assert is_default
 except:
@@ -317,7 +300,7 @@ else:
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider returns empty list
 try:
-    content = resource_listdir(modname + '.submod', 'data/non-existant')
+    content = resource_listdir(pkgname + '.subpkg1', 'data/non-existant')
 except FileNotFoundError:
     assert is_default
 except:
@@ -332,12 +315,12 @@ else:
 #  > PyiFrozenProvider currently returns either, depending on whether
 #    directory exists only as embedded resource or also on filesystem
 #    (but does not list source files)
-content = resource_listdir(modname, '..')
+content = resource_listdir(pkgname, '..')
 content = set(content)
 
-assert (is_default and modname in content) or \
+assert (is_default and pkgname in content) or \
        (is_zip and content == set()) or \
-       (is_frozen and (modname in content or content == set()))
+       (is_frozen and (pkgname in content or content == set()))
 
 # Attempt to list submodule's parent
 #  * DefaultProvider actually lists the parent directory
@@ -345,12 +328,13 @@ assert (is_default and modname in content) or \
 #  > PyiFrozenProvider currently returns either, depending on whether
 #    directory exists only as embedded resource or also on filesystem
 #    (but does not list source files)
-expected = {'__init__.py', 'submod'}
+expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
 
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
+    expected.remove('subpkg2') # FIXME
 
-content = resource_listdir(modname + '.submod', '..')
+content = resource_listdir(pkgname + '.subpkg1', '..')
 content = set(content)
 
 if '__pycache__' in content:

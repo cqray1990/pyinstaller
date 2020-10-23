@@ -81,6 +81,6 @@ def test_pkg_resources_provider_frozen(pyi_builder, package_type, script_dir):
 
     pyi_builder.test_script(test_script, pyi_args=[
         '--paths', pathex,
-        '--hidden-import', 'pyi_pkgres_testmod',
+        '--hidden-import', 'pyi_pkgres_testpkg',
         '--additional-hooks-dir', hooks_dir]
     )

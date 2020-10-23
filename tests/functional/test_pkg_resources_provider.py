@@ -44,13 +44,13 @@ def __exec_python_script(script_filename, *args, pathex=None):
 
     return exec_python_rc(*cmd, env=env)
 
-def __get_test_module_path(module_type):
-    # Same test module, in three different formats
-    if module_type == 'module':
+def __get_test_package_path(package_type):
+    # Same test package, in three different formats
+    if package_type == 'pkg':
         pathex = os.path.join(_MODULES_DIR,
                               'pyi_pkg_resources_provider',
-                              'module')
-    elif module_type == 'egg':
+                              'package')
+    elif package_type == 'egg':
         pathex = os.path.join(_MODULES_DIR,
                               'pyi_pkg_resources_provider',
                               'egg-zipped.egg')
@@ -58,10 +58,10 @@ def __get_test_module_path(module_type):
     return pathex
 
 @importorskip('pkg_resources')
-@pytest.mark.parametrize('module_type', ['module', 'egg'])
-def test_pkg_resources_provider_source(module_type, script_dir):
+@pytest.mark.parametrize('package_type', ['pkg', 'egg'])
+def test_pkg_resources_provider_source(package_type, script_dir):
     # Run the source python test script
-    pathex = __get_test_module_path(module_type)
+    pathex = __get_test_package_path(package_type)
     test_script = 'pyi_pkg_resources_provider.py'
 
     test_script = os.path.join(script_dir, test_script)
@@ -69,10 +69,10 @@ def test_pkg_resources_provider_source(module_type, script_dir):
     assert ret == 0, "Test script failed!"
 
 @importorskip('pkg_resources')
-@pytest.mark.parametrize('module_type', ['module', 'egg'])
-def test_pkg_resources_provider_frozen(pyi_builder, module_type, script_dir):
+@pytest.mark.parametrize('package_type', ['pkg', 'egg'])
+def test_pkg_resources_provider_frozen(pyi_builder, package_type, script_dir):
     # Run the test script as a frozen program
-    pathex = __get_test_module_path(module_type)
+    pathex = __get_test_package_path(package_type)
     test_script = 'pyi_pkg_resources_provider.py'
 
     hooks_dir = os.path.join(_MODULES_DIR,

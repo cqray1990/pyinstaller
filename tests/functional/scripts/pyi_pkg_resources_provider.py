@@ -137,7 +137,7 @@ assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
 
-# Parent of sub-package's directory
+# Parent of subpackage's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider currently returns either, depending on whether
@@ -146,6 +146,23 @@ ret = resource_exists(pkgname + '.subpkg1', '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
+
+
+# Submodule in main package
+ret = resource_exists(pkgname + '.a', '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
+
+ret = resource_exists(pkgname + '.a', '')
+assert ret == True
+
+# Submodule in subpackage
+ret = resource_exists(pkgname + '.subpkg1.c', '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
+
+ret = resource_exists(pkgname + '.subpkg1.c', '')
+assert ret == True
 
 
 ########################################################################
@@ -227,6 +244,23 @@ ret = resource_isdir(pkgname + '.subpkg1', '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
        (is_frozen)
+
+
+# Submodule in main package
+ret = resource_isdir(pkgname + '.a', '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
+
+ret = resource_isdir(pkgname + '.a', '')
+assert ret == True
+
+# Submodule in subpackage
+ret = resource_isdir(pkgname + '.subpkg1.c', '.')
+assert (is_default and ret == True) or \
+       (is_zip and ret == False)
+
+ret = resource_isdir(pkgname + '.subpkg1.c', '')
+assert ret == True
 
 
 ########################################################################
@@ -452,3 +486,15 @@ if '__pycache__' in content:
 
 assert content == expected or \
        (is_frozen and content == set())  # FIXME
+
+
+# Attempt to list submodule in main package - should give the same results
+# as listing the package itself
+assert set(resource_listdir(pkgname + '.a', '')) == \
+       set(resource_listdir(pkgname, ''))  # empty path!
+
+
+# Attempt to list submodule in subpackage - should give the same results
+# as listing the subpackage itself
+assert set(resource_listdir(pkgname + '.subpkg1.c', '')) == \
+       set(resource_listdir(pkgname + '.subpkg1', '')) # empty path!

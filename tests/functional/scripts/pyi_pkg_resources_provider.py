@@ -60,9 +60,11 @@ assert any([is_default, is_zip, is_frozen]), "Unsupported provider type!"
 # Module's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider returns True
 ret = resource_exists(modname, '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 # Submodule's directory (relative to module):
 #  * both DefaultProvider and ZipProvider return True
@@ -71,9 +73,11 @@ assert resource_exists(modname, 'submod') == True
 # Submodule directory (relative to submodule):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider returns True
 ret = resource_exists(modname + '.submod', '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 # Data directory in submodule
 assert resource_exists(modname, 'submod/data') == True
@@ -86,12 +90,14 @@ assert resource_exists(modname + '.submod', 'data/extra') == True
 # Subdirectory in data directory (invalid module name)
 #  * DefaultProvider raises TypeError
 #  * ZipProvider raises ModuleNotFoundError
+#  > with PyiFrozenProvider, we may get either - however, this behavior
+#    depends on the underlying module loader, not the provider!
 try:
     resource_exists(modname + '.submod.data', 'extra')
 except TypeError:
-    assert is_default
+    assert is_default or is_frozen
 except ModuleNotFoundError:
-    assert is_zip
+    assert is_zip or is_frozen
 except:
     raise
 else:
@@ -107,21 +113,31 @@ assert resource_exists(modname, 'submod/data/extra/extra_entry1.txt') == True
 assert resource_exists(modname, 'submod/non-existant') == False
 
 # A source script file in top-level module
-assert resource_exists(modname, '__init__.py') == True
+#  > PyiFrozenProvider returns False because frozen application does
+#    not contain source files
+ret = resource_exists(modname, '__init__.py')
+assert (not is_frozen and ret == True) or \
+       (is_frozen and ret == False)
 
 # Parent of module's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider currently returns either, depending on whether
+#    module's directory exists only as embedded resource or also on filesystem
 ret = resource_exists(modname, '..')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen)
 
 # Parent of submodule
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider currently returns either, depending on whether
+#    module's directory exists only as embedded resource or also on filesystem
 ret = resource_exists(modname + '.submod', '..')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen)
 
 
 ########################################################################
@@ -130,9 +146,11 @@ assert (is_default and ret == True) or \
 # Module's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider returns True
 ret = resource_isdir(modname, '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 # Submodule's directory (relative to module):
 #  * both DefaultProvider and ZipProvider return True
@@ -141,9 +159,12 @@ assert resource_isdir(modname, 'submod') == True
 # Submodule directory (relative to submodule):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > with PyiFrozenProvider, we may get either - however, this behavior
+#    depends on the underlying module loader, not the provider!
 ret = resource_isdir(modname + '.submod', '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 # Data directory in submodule
 assert resource_isdir(modname, 'submod/data') == True
@@ -159,9 +180,9 @@ assert resource_isdir(modname + '.submod', 'data/extra') == True
 try:
     resource_isdir(modname + '.submod.data', 'extra')
 except TypeError:
-    assert is_default
+    assert is_default or is_frozen
 except ModuleNotFoundError:
-    assert is_zip
+    assert is_zip or is_frozen
 except:
     raise
 else:
@@ -177,21 +198,29 @@ assert resource_isdir(modname, 'submod/data/extra/extra_entry1.txt') == False
 assert resource_isdir(modname, 'submod/non-existant') == False
 
 # A source script file in top-level module - should return False
+# NOTE: PyFrozenProvider returns False because the file does not
+# exist.
 assert resource_isdir(modname, '__init__.py') == False
 
 # Parent of module's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider currently returns either, depending on whether
+#    directory exists only as embedded resource or also on filesystem
 ret = resource_isdir(modname, '..')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen)
 
 # Parent of submodule
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
+#  > PyiFrozenProvider currently returns either, depending on whether
+#    directory exists only as embedded resource or also on filesystem
 ret = resource_isdir(modname + '.submod', '..')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen)
 
 
 ########################################################################
@@ -200,7 +229,12 @@ assert (is_default and ret == True) or \
 # List module's top-level directory
 #  * DefaultProvider lists the directory
 #  * ZipProvider returns empty list
+#  > PyiFrozenProvider lists the directory, but does not provide source
+#    .py files
 expected = {'__init__.py', 'submod'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(modname, '.')
 content = set(content)
@@ -209,10 +243,16 @@ if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
 assert (is_default and content == expected) or \
-       (is_zip and content == set())
+       (is_zip and content == set()) or \
+       (is_frozen and content == expected)
 
 # List submodule directory
+#  > PyiFrozenProvider lists the directory, but does not provide source
+#    .py files
 expected = {'__init__.py', 'data'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(modname, 'submod')
 content = set(content)
@@ -248,6 +288,7 @@ assert content == expected
 # Attempt to list a file (existing resource but not a directory).
 #  * DefaultProvider raises NotADirectoryError
 #  * ZipProvider returns empty list
+#  > PyiFrozenProvider returns empty list
 try:
     content = resource_listdir(modname + '.submod', 'data/entry1.txt')
 except NotADirectoryError:
@@ -255,12 +296,13 @@ except NotADirectoryError:
 except:
     raise
 else:
-    assert is_zip and content == []
+    assert (is_zip or is_frozen) and content == []
 
 
 # Attempt to list an non-existant directory in main module.
 #  * DefaultProvider raises FileNotFoundError
 #  * ZipProvider returns empty list
+#  > PyiFrozenProvider returns empty list
 try:
     content = resource_listdir(modname, 'non-existant')
 except FileNotFoundError:
@@ -268,11 +310,12 @@ except FileNotFoundError:
 except:
     raise
 else:
-    assert is_zip and content == []
+    assert (is_zip or is_frozen) and content == []
 
 # Attempt to list an non-existant directory in submodule
 #  * DefaultProvider raises FileNotFoundError
 #  * ZipProvider returns empty list
+#  > PyiFrozenProvider returns empty list
 try:
     content = resource_listdir(modname + '.submod', 'data/non-existant')
 except FileNotFoundError:
@@ -280,22 +323,32 @@ except FileNotFoundError:
 except:
     raise
 else:
-    assert is_zip and content == []
+    assert (is_zip or is_frozen) and content == []
 
 
 # Attempt to list module's parent
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
+#  > PyiFrozenProvider currently returns either, depending on whether
+#    directory exists only as embedded resource or also on filesystem
+#    (but does not list source files)
 content = resource_listdir(modname, '..')
 content = set(content)
 
 assert (is_default and modname in content) or \
-       (is_zip and content == set())
+       (is_zip and content == set()) or \
+       (is_frozen and (modname in content or content == set()))
 
 # Attempt to list submodule's parent
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
+#  > PyiFrozenProvider currently returns either, depending on whether
+#    directory exists only as embedded resource or also on filesystem
+#    (but does not list source files)
 expected = {'__init__.py', 'submod'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(modname + '.submod', '..')
 content = set(content)
@@ -304,4 +357,5 @@ if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
 assert (is_default and content == expected) or \
-       (is_zip and content == set())
+       (is_zip and content == set()) or \
+       (is_frozen and content == set() or content == expected)

@@ -13,7 +13,7 @@ import os
 import sys
 import pathlib
 
-import pkg_resources as res
+import pkg_resources
 from pyimod03_importers import FrozenImporter
 
 SYS_PREFIX = pathlib.PurePath(sys._MEIPASS)
@@ -84,6 +84,7 @@ class _TocFilesystem:
 
         return True
 
+
     def path_listdir(self, path):
         node = self._get_tree_node(path)
 
@@ -93,7 +94,7 @@ class _TocFilesystem:
         return list(node.keys())
 
 
-class PyiFrozenProvider(res.NullProvider):
+class PyiFrozenProvider(pkg_resources.NullProvider):
     def __init__(self, module):
         super().__init__(module)
 
@@ -174,4 +175,5 @@ class PyiFrozenProvider(res.NullProvider):
 
         return content
 
-res.register_loader_type(FrozenImporter, PyiFrozenProvider)
+
+pkg_resources.register_loader_type(FrozenImporter, PyiFrozenProvider)

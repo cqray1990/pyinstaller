@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #-----------------------------------------------------------------------------
 # Copyright (c) 2020, PyInstaller Development Team.
 #
@@ -9,6 +8,7 @@
 #
 # SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
+
 
 # A test script for validation of pkg_resources provider implementation.
 #

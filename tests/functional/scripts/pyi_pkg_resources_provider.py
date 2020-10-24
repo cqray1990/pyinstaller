@@ -130,22 +130,24 @@ assert (not is_frozen and ret == True) or \
 # Parent of pacakge's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-#  > PyiFrozenProvider currently returns either, depending on whether
-#    package's directory exists only as embedded resource or also on filesystem
+#  > PyiFrozenProvider disallows jumping to parent, and returns False
+# NOTE: using .. in path is deprecated and will raise exception in
+# future pkg_resources release
 ret = resource_exists(pkgname, '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
-       (is_frozen)
+       (is_frozen and ret == False)
 
 # Parent of subpackage's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-#  > PyiFrozenProvider currently returns either, depending on whether
-#    package's directory exists only as embedded resource or also on filesystem
+#  > PyiFrozenProvider disallows jumping to parent, and returns False
+# NOTE: using .. in path is deprecated and will raise exception in
+# future pkg_resources release
 ret = resource_exists(pkgname + '.subpkg1', '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
-       (is_frozen)
+       (is_frozen and ret == False)
 
 
 # Submodule in main package
@@ -230,22 +232,24 @@ assert resource_isdir(pkgname, '__init__.py') == False
 # Parent of package's top-level directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-#  > PyiFrozenProvider currently returns either, depending on whether
-#    directory exists only as embedded resource or also on filesystem
+#  > PyiFrozenProvider disallows jumping to parent, and returns False
+# NOTE: using .. in path is deprecated and will raise exception in
+# future pkg_resources release
 ret = resource_isdir(pkgname, '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
-       (is_frozen)
+       (is_frozen and ret == False)
 
 # Parent of subpacakge's directory
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
-#  > PyiFrozenProvider currently returns either, depending on whether
-#    directory exists only as embedded resource or also on filesystem
+#  > PyiFrozenProvider disallows jumping to parent, and returns False
+# NOTE: using .. in path is deprecated and will raise exception in
+# future pkg_resources release
 ret = resource_isdir(pkgname + '.subpkg1', '..')
 assert (is_default and ret == True) or \
        (is_zip and ret == False) or \
-       (is_frozen)
+       (is_frozen and ret == False)
 
 
 # Submodule in main package
@@ -390,22 +394,21 @@ else:
 # Attempt to list pacakge's parent directory
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
-#  > PyiFrozenProvider currently returns either, depending on whether
-#    directory exists only as embedded resource or also on filesystem
-#    (but does not list source files)
+#  > PyiFrozenProvider disallows jumping to parent, and returns empty list
+# NOTE: using .. in path is deprecated and will raise exception in
+# future pkg_resources release
 content = resource_listdir(pkgname, '..')
-content = set(content)
 
 assert (is_default and pkgname in content) or \
-       (is_zip and content == set()) or \
-       (is_frozen and (pkgname in content or content == set()))
+       (is_zip and content == []) or \
+       (is_frozen and content == [])
 
 # Attempt to list subpackage's parent directory
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
-#  > PyiFrozenProvider currently returns either, depending on whether
-#    directory exists only as embedded resource or also on filesystem
-#    (but does not list source files)
+#  > PyiFrozenProvider disallows jumping to parent, and returns False
+# NOTE: using .. in path is deprecated and will raise exception in
+# future pkg_resources release
 expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
 
 if is_frozen:
@@ -419,7 +422,7 @@ if '__pycache__' in content:
 
 assert (is_default and content == expected) or \
        (is_zip and content == set()) or \
-       (is_frozen and content == set() or content == expected)
+       (is_frozen and content == set())
 
 
 # Attempt to list directory of subpackage that has no data files or

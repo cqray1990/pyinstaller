@@ -101,12 +101,12 @@ class PyiFrozenProvider(res.NullProvider):
         # NOTE: construct the path from module.__file__ instead of using
         # module.__path__, because the latter is available only for
         # packages and not for their modules
-        pkg_path = os.path.dirname(module.__file__)
-        pkg_path = pkg_path[SYS_PREFIXLEN+1:]
+        self.pkg_path = os.path.dirname(module.__file__)
+        rel_pkg_path = self.pkg_path[SYS_PREFIXLEN+1:]
 
         # Reconstruct package name prefix (use package path to obtain
         # correct prefix in case of module)
-        pkg_name = '.'.join(pathlib.PurePath(pkg_path).parts)
+        pkg_name = '.'.join(pathlib.PurePath(rel_pkg_path).parts)
 
         # Collect relevant entries from TOC. We are interested in either
         # files that are located in the package/module's directory (data
@@ -116,7 +116,7 @@ class PyiFrozenProvider(res.NullProvider):
         package_dirs = []
 
         for entry in self.loader.toc:
-            if entry.startswith(pkg_path + os.path.sep):
+            if entry.startswith(rel_pkg_path + os.path.sep):
                 # Data file path
                 data_files.append(entry)
             elif entry.startswith(pkg_name) and self.loader.is_package(entry):
@@ -131,17 +131,26 @@ class PyiFrozenProvider(res.NullProvider):
         assert path.startswith(SYS_PREFIX + os.path.sep)
         rel_path = path[SYS_PREFIXLEN+1:]
 
+        if not os.path.abspath(path).startswith(self.pkg_path):
+            return False
+
         return self.embedded_tree.path_exists(rel_path) or os.path.exists(path)
 
     def _isdir(self, path):
         assert path.startswith(SYS_PREFIX + os.path.sep)
         rel_path = path[SYS_PREFIXLEN+1:]
 
+        if not os.path.abspath(path).startswith(self.pkg_path):
+            return False
+
         return self.embedded_tree.path_isdir(rel_path) or os.path.isdir(path)
 
     def _listdir(self, path):
         assert path.startswith(SYS_PREFIX + os.path.sep)
         rel_path = path[SYS_PREFIXLEN+1:]
+
+        if not os.path.abspath(path).startswith(self.pkg_path):
+            return []
 
         # List content from embedded filesystem...
         content = self.embedded_tree.path_listdir(rel_path)

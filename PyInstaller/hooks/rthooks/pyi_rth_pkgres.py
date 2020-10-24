@@ -89,8 +89,12 @@ class PyiFrozenProvider(res.NullProvider):
     def __init__(self, module):
         super().__init__(module)
 
-        # Construct relative module path for searching the TOC
-        module_path = module.__path__[0][SYS_PREFIXLEN+1:]
+        # Construct relative package/module path for searching the TOC
+        # NOTE: construct the path from module.__file__ instead of using
+        # module.__path__, because the latter is available only for
+        # packages and not for their modules
+        module_path = os.path.dirname(module.__file__)
+        module_path = module_path[SYS_PREFIXLEN+1:]
 
         # Collect entries from TOC that are located within the module
         # and are not Python modules/packages. These correspond to

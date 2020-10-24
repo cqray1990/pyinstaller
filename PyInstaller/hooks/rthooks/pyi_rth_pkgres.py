@@ -16,8 +16,8 @@ import pathlib
 import pkg_resources as res
 from pyimod03_importers import FrozenImporter
 
-SYS_PREFIX = sys._MEIPASS
-SYS_PREFIXLEN = len(SYS_PREFIX)
+SYS_PREFIX = pathlib.PurePath(sys._MEIPASS)
+
 
 # To make pkg_resources work with frozen modules we need to set the 'Provider'
 # class for FrozenImporter. This class decides where to look for resources
@@ -97,16 +97,19 @@ class PyiFrozenProvider(res.NullProvider):
     def __init__(self, module):
         super().__init__(module)
 
-        # Construct relative package/module path for searching the TOC
-        # NOTE: construct the path from module.__file__ instead of using
-        # module.__path__, because the latter is available only for
-        # packages and not for their modules
-        self.pkg_path = os.path.dirname(module.__file__)
-        rel_pkg_path = self.pkg_path[SYS_PREFIXLEN+1:]
+        # Get top-level path; if "module" corresponds to a package,
+        # we need the path to the package itself. If "module" is a
+        # submodule in a package, we need the path to the parent
+        # package.
+        self._pkg_path = pathlib.PurePath(module.__file__).parent
+
+        # Construct a path relative to _MEIPASS directory for searching
+        # the TOC
+        rel_pkg_path = self._pkg_path.relative_to(SYS_PREFIX)
 
         # Reconstruct package name prefix (use package path to obtain
-        # correct prefix in case of module)
-        pkg_name = '.'.join(pathlib.PurePath(rel_pkg_path).parts)
+        # correct prefix in case of a module)
+        pkg_name = '.'.join(rel_pkg_path.parts)
 
         # Collect relevant entries from TOC. We are interested in either
         # files that are located in the package/module's directory (data
@@ -116,47 +119,57 @@ class PyiFrozenProvider(res.NullProvider):
         package_dirs = []
 
         for entry in self.loader.toc:
-            if entry.startswith(rel_pkg_path + os.path.sep):
+            entry_path = pathlib.PurePath(entry)
+
+            if rel_pkg_path in entry_path.parents:
                 # Data file path
-                data_files.append(entry)
+                data_files.append(entry_path)
             elif entry.startswith(pkg_name) and self.loader.is_package(entry):
                 # Package or subpackage; convert the name to directory path
-                package_dir = os.path.sep.join(entry.split('.'))
+                package_dir = pathlib.PurePath(*entry.split('.'))
                 package_dirs.append(package_dir)
 
         # Reconstruct the filesystem
         self.embedded_tree = _TocFilesystem(data_files, package_dirs)
 
     def _has(self, path):
-        assert path.startswith(SYS_PREFIX + os.path.sep)
-        rel_path = path[SYS_PREFIXLEN+1:]
-
-        if not os.path.abspath(path).startswith(self.pkg_path):
+        # Prevent access outside the package
+        path = pathlib.Path(path).resolve()
+        if path != self._pkg_path and self._pkg_path not in path.parents:
             return False
 
-        return self.embedded_tree.path_exists(rel_path) or os.path.exists(path)
+        # Relative path for searching embedded resources
+        rel_path = path.relative_to(SYS_PREFIX)
+
+        return self.embedded_tree.path_exists(rel_path) or path.exists()
 
     def _isdir(self, path):
-        assert path.startswith(SYS_PREFIX + os.path.sep)
-        rel_path = path[SYS_PREFIXLEN+1:]
-
-        if not os.path.abspath(path).startswith(self.pkg_path):
+        # Prevent access outside the package
+        path = pathlib.Path(path).resolve()
+        if path != self._pkg_path and self._pkg_path not in path.parents:
             return False
+
+        # Relative path for searching embedded resources
+        rel_path = path.relative_to(SYS_PREFIX)
 
         return self.embedded_tree.path_isdir(rel_path) or os.path.isdir(path)
 
     def _listdir(self, path):
-        assert path.startswith(SYS_PREFIX + os.path.sep)
-        rel_path = path[SYS_PREFIXLEN+1:]
-
-        if not os.path.abspath(path).startswith(self.pkg_path):
+        # Prevent access outside the package
+        path = pathlib.Path(path).resolve()
+        if path != self._pkg_path and self._pkg_path not in path.parents:
             return []
+
+        # Relative path for searching embedded resources
+        rel_path = path.relative_to(SYS_PREFIX)
 
         # List content from embedded filesystem...
         content = self.embedded_tree.path_listdir(rel_path)
 
         # ... as well as the actual one
-        if os.path.isdir(path):
+        if path.is_dir():
+            # Use os.listidr() to avoid having to convert Path objects
+            # to strings...
             content += os.listdir(path)
 
         return content

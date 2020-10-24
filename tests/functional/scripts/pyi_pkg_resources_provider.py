@@ -85,8 +85,8 @@ assert ret == True
 
 # Subpackage's directory (relative to main package):
 assert resource_exists(pkgname, 'subpkg1') == True
-assert resource_exists(pkgname, 'subpkg2') == True or is_frozen  # FIXME
-assert resource_exists(pkgname, 'subpkg2/subsubpkg21') == True or is_frozen  # FIXME
+assert resource_exists(pkgname, 'subpkg2') == True
+assert resource_exists(pkgname, 'subpkg2/subsubpkg21') == True
 assert resource_exists(pkgname, 'subpkg3') == True
 
 # Subpackage's directory (relative to subpackage itself):
@@ -151,7 +151,8 @@ assert (is_default and ret == True) or \
 # Submodule in main package
 ret = resource_exists(pkgname + '.a', '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 ret = resource_exists(pkgname + '.a', '')
 assert ret == True
@@ -159,7 +160,8 @@ assert ret == True
 # Submodule in subpackage
 ret = resource_exists(pkgname + '.subpkg1.c', '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 ret = resource_exists(pkgname + '.subpkg1.c', '')
 assert ret == True
@@ -185,8 +187,8 @@ assert ret == True
 # Subpackage's directory (relative to main pacakge):
 #  * both DefaultProvider and ZipProvider return True
 assert resource_isdir(pkgname, 'subpkg1') == True
-assert resource_isdir(pkgname, 'subpkg2') == True or is_frozen  # FIXME
-assert resource_isdir(pkgname, 'subpkg2/subsubpkg21') == True or is_frozen  # FIXME
+assert resource_isdir(pkgname, 'subpkg2') == True
+assert resource_isdir(pkgname, 'subpkg2/subsubpkg21') == True
 assert resource_isdir(pkgname, 'subpkg3') == True
 
 # Subpackage's directory (relative to subpackage itself):
@@ -249,7 +251,8 @@ assert (is_default and ret == True) or \
 # Submodule in main package
 ret = resource_isdir(pkgname + '.a', '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 ret = resource_isdir(pkgname + '.a', '')
 assert ret == True
@@ -257,7 +260,8 @@ assert ret == True
 # Submodule in subpackage
 ret = resource_isdir(pkgname + '.subpkg1.c', '.')
 assert (is_default and ret == True) or \
-       (is_zip and ret == False)
+       (is_zip and ret == False) or \
+       (is_frozen and ret == True)
 
 ret = resource_isdir(pkgname + '.subpkg1.c', '')
 assert ret == True
@@ -275,7 +279,6 @@ expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
 
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-    expected.remove('subpkg2')  # FIXME
 
 content = resource_listdir(pkgname, '.')
 content = set(content)
@@ -294,7 +297,6 @@ expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
 
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-    expected.remove('subpkg2')  # FIXME
 
 content = resource_listdir(pkgname, '')
 content = set(content)
@@ -408,7 +410,6 @@ expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
 
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-    expected.remove('subpkg2') # FIXME
 
 content = resource_listdir(pkgname + '.subpkg1', '..')
 content = set(content)
@@ -425,18 +426,23 @@ assert (is_default and content == expected) or \
 # directories (relative to main package)
 expected = {'__init__.py', 'mod.py', 'subsubpkg21'}
 
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
+
 content = resource_listdir(pkgname, 'subpkg2')
 content = set(content)
 
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
-assert content == expected or \
-       (is_frozen and content == set())  # FIXME
+assert content == expected, f"CONTENT: {content}"
 
 # Attempt to list directory of subpackage that has no data files or
 # directories (relative to subpackage itself)
 expected = {'__init__.py', 'mod.py', 'subsubpkg21'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(pkgname + '.subpkg2', '')  # empty path!
 content = set(content)
@@ -444,13 +450,15 @@ content = set(content)
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
-assert content == expected or \
-       (is_frozen and content == set())  # FIXME
+assert content == expected
 
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to main package)
 expected = {'__init__.py', 'mod.py'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(pkgname, 'subpkg2/subsubpkg21')
 content = set(content)
@@ -458,12 +466,14 @@ content = set(content)
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
-assert content == expected or \
-       (is_frozen and content == set())  # FIXME
+assert content == expected
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to parent subpackage)
 expected = {'__init__.py', 'mod.py'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(pkgname + '.subpkg2', 'subsubpkg21')
 content = set(content)
@@ -471,12 +481,14 @@ content = set(content)
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
-assert content == expected or \
-       (is_frozen and content == set())  # FIXME
+assert content == expected
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to subsubpackage itself)
 expected = {'__init__.py', 'mod.py'}
+
+if is_frozen:
+    expected = {x for x in expected if not x.endswith('.py')}
 
 content = resource_listdir(pkgname + '.subpkg2.subsubpkg21', '')  # empty path!
 content = set(content)
@@ -484,8 +496,7 @@ content = set(content)
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
-assert content == expected or \
-       (is_frozen and content == set())  # FIXME
+assert content == expected
 
 
 # Attempt to list submodule in main package - should give the same results

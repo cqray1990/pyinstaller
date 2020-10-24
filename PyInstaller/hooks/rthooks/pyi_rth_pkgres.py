@@ -33,20 +33,28 @@ SYS_PREFIXLEN = len(SYS_PREFIX)
 # embedded resources.
 
 class _TocFilesystem:
-    def __init__(self, toc):
-        self._tree = self._build_tree(toc)
+    def __init__(self, toc_files, toc_dirs=[]):
+        # Reconstruct the fileystem hierarchy by building a trie from
+        # the given file and directory paths
+        self._tree = dict()
 
-    def _build_tree(self, toc):
-        root = dict()
-        for path in toc:
+        # Data files
+        for path in toc_files:
             path = pathlib.PurePath(path)
-            current = root
+            current = self._tree
 
             for component in path.parts[:-1]:
                 current = current.setdefault(component, {})
             current[path.parts[-1]] = ''
 
-        return root
+        # Extra directories
+        for path in toc_dirs:
+            path = pathlib.PurePath(path)
+            current = self._tree
+
+            for component in path.parts:
+                current = current.setdefault(component, {})
+
 
     def _get_tree_node(self, path):
         path = pathlib.PurePath(path)
@@ -93,19 +101,31 @@ class PyiFrozenProvider(res.NullProvider):
         # NOTE: construct the path from module.__file__ instead of using
         # module.__path__, because the latter is available only for
         # packages and not for their modules
-        module_path = os.path.dirname(module.__file__)
-        module_path = module_path[SYS_PREFIXLEN+1:]
+        pkg_path = os.path.dirname(module.__file__)
+        pkg_path = pkg_path[SYS_PREFIXLEN+1:]
 
-        # Collect entries from TOC that are located within the module
-        # and are not Python modules/packages. These correspond to
-        # embedded data entries
-        data_paths = [x for x in self.loader.toc if
-            x.startswith(module_path) and
-            not self.loader.is_package(x)
-        ]
+        # Reconstruct package name prefix (use package path to obtain
+        # correct prefix in case of module)
+        pkg_name = '.'.join(pathlib.PurePath(pkg_path).parts)
+
+        # Collect relevant entries from TOC. We are interested in either
+        # files that are located in the package/module's directory (data
+        # files) or in packages that are prefixed with package/module's
+        # name (to reconstruct subpackage directories)
+        data_files = []
+        package_dirs = []
+
+        for entry in self.loader.toc:
+            if entry.startswith(pkg_path + os.path.sep):
+                # Data file path
+                data_files.append(entry)
+            elif entry.startswith(pkg_name) and self.loader.is_package(entry):
+                # Package or subpackage; convert the name to directory path
+                package_dir = os.path.sep.join(entry.split('.'))
+                package_dirs.append(package_dir)
 
         # Reconstruct the filesystem
-        self.embedded_tree = _TocFilesystem(data_paths)
+        self.embedded_tree = _TocFilesystem(data_files, package_dirs)
 
     def _has(self, path):
         assert path.startswith(SYS_PREFIX + os.path.sep)

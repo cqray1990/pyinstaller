@@ -133,10 +133,22 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
         # Reconstruct the filesystem
         self.embedded_tree = _TocFilesystem(data_files, package_dirs)
 
+    def _normalize_path(self, path):
+        # Avoid using Path.resolve(), because it resolves symlinks. This
+        # is undesirable, because the pure path in self._pkg_path does
+        # not have symlinks resolved, so comparison between the two
+        # would be faulty. So use os.path.abspath() instead to normalize
+        # the path
+        return pathlib.Path(os.path.abspath(path))
+
+    def _is_relative_to_package(self, path):
+        return path == self._pkg_path or \
+               self._pkg_path in path.parents
+
     def _has(self, path):
         # Prevent access outside the package
-        path = pathlib.Path(path).resolve()
-        if path != self._pkg_path and self._pkg_path not in path.parents:
+        path = self._normalize_path(path)
+        if not self._is_relative_to_package(path):
             return False
 
         # Relative path for searching embedded resources
@@ -146,8 +158,8 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
     def _isdir(self, path):
         # Prevent access outside the package
-        path = pathlib.Path(path).resolve()
-        if path != self._pkg_path and self._pkg_path not in path.parents:
+        path = self._normalize_path(path)
+        if not self._is_relative_to_package(path):
             return False
 
         # Relative path for searching embedded resources
@@ -157,8 +169,8 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
     def _listdir(self, path):
         # Prevent access outside the package
-        path = pathlib.Path(path).resolve()
-        if path != self._pkg_path and self._pkg_path not in path.parents:
+        path = self._normalize_path(path)
+        if not self._is_relative_to_package(path):
             return []
 
         # Relative path for searching embedded resources

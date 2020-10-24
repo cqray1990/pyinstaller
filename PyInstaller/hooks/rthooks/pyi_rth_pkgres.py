@@ -90,7 +90,7 @@ class _TocFilesystem:
         if not isinstance(node, dict):
             return []  # Non-existant or file
 
-        return node.keys()
+        return list(node.keys())
 
 
 class PyiFrozenProvider(res.NullProvider):

@@ -438,7 +438,7 @@ content = set(content)
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
 
-assert content == expected, f"CONTENT: {content}"
+assert content == expected
 
 # Attempt to list directory of subpackage that has no data files or
 # directories (relative to subpackage itself)

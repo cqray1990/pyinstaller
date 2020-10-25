@@ -183,6 +183,7 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
         if path.is_dir():
             # Use os.listidr() to avoid having to convert Path objects
             # to strings...
+            path = str(path)  # python 3.5
             content += os.listdir(path)
 
         return content

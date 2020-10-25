@@ -165,7 +165,7 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
         # Relative path for searching embedded resources
         rel_path = path.relative_to(SYS_PREFIX)
 
-        return self.embedded_tree.path_isdir(rel_path) or os.path.isdir(path)
+        return self.embedded_tree.path_isdir(rel_path) or path.is_dir()
 
     def _listdir(self, path):
         # Prevent access outside the package

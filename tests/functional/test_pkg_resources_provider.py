@@ -19,7 +19,6 @@ import sys
 # Third-party imports
 # -------------------
 import pytest
-import py
 
 # Local imports
 # -------------
@@ -28,7 +27,7 @@ from PyInstaller.compat import exec_python_rc
 
 # :todo: find a way to get this from `conftest` or such
 # Directory with testing modules used in some tests.
-_MODULES_DIR = py.path.local(os.path.abspath(__file__)).dirpath('modules')
+_MODULES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules')
 
 def __exec_python_script(script_filename, *args, pathex=None):
     cmd = [script_filename]

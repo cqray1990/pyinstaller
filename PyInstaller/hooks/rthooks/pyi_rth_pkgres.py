@@ -26,8 +26,8 @@ SYS_PREFIX = pathlib.PurePath(sys._MEIPASS)
 # methods pkg_resources.resource_string() and pkg_resources.resource_stream()
 
 # We subclass the NullProvider and implement _has(), _isdir(), and _listdir(),
-# which are needed for pkg_resources.has_resource(), pkg_resources.resource_isdir(),
-# and pkg_resources.resource_listdir() to work. We cannot use the DefaultProvider,
+# which are needed for pkg_resources.has_resource(), resource_isdir(),
+# and resource_listdir() to work. We cannot use the DefaultProvider,
 # because it provides filesystem-only implementations (and overrides _get()
 # with a filesystem-only one), whereas our provider needs to also support
 # embedded resources.
@@ -55,7 +55,6 @@ class _TocFilesystem:
             for component in path.parts:
                 current = current.setdefault(component, {})
 
-
     def _get_tree_node(self, path):
         path = pathlib.PurePath(path)
 
@@ -67,11 +66,9 @@ class _TocFilesystem:
 
         return current
 
-
     def path_exists(self, path):
         node = self._get_tree_node(path)
         return node is not None  # File or directory
-
 
     def path_isdir(self, path):
         node = self._get_tree_node(path)
@@ -83,7 +80,6 @@ class _TocFilesystem:
             return False  # File
 
         return True
-
 
     def path_listdir(self, path):
         node = self._get_tree_node(path)
@@ -142,8 +138,7 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
         return pathlib.Path(os.path.abspath(path))
 
     def _is_relative_to_package(self, path):
-        return path == self._pkg_path or \
-               self._pkg_path in path.parents
+        return path == self._pkg_path or self._pkg_path in path.parents
 
     def _has(self, path):
         # Prevent access outside the package

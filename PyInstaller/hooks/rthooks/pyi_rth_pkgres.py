@@ -26,7 +26,7 @@ SYS_PREFIX = pathlib.PurePath(sys._MEIPASS)
 # methods pkg_resources.resource_string() and pkg_resources.resource_stream()
 
 # We subclass the NullProvider and implement _has(), _isdir(), and _listdir(),
-# which are needed for pkg_resources.has_resource(), resource_isdir(),
+# which are needed for pkg_resources.resource_exists(), resource_isdir(),
 # and resource_listdir() to work. We cannot use the DefaultProvider,
 # because it provides filesystem-only implementations (and overrides _get()
 # with a filesystem-only one), whereas our provider needs to also support

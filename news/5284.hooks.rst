@@ -1,0 +1,1 @@
+Implement package content listing via ``pkg_resources``. Add a custom provider for ``FrozenImporter`` that enables support for ``pkg_resources.resource_exists()``, ``pkg_resources.resource_isdir()``, and ``pkg_resources.resource_listdir()``.

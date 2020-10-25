@@ -14,7 +14,6 @@
 # ---------------
 import copy
 import os
-import sys
 
 # Third-party imports
 # -------------------
@@ -27,7 +26,11 @@ from PyInstaller.compat import exec_python_rc
 
 # :todo: find a way to get this from `conftest` or such
 # Directory with testing modules used in some tests.
-_MODULES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules')
+_MODULES_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'modules'
+)
+
 
 def __exec_python_script(script_filename, *args, pathex=None):
     cmd = [script_filename]
@@ -43,6 +46,7 @@ def __exec_python_script(script_filename, *args, pathex=None):
 
     return exec_python_rc(*cmd, env=env)
 
+
 def __get_test_package_path(package_type):
     # Same test package, in three different formats
     if package_type == 'pkg':
@@ -56,6 +60,7 @@ def __get_test_package_path(package_type):
 
     return pathex
 
+
 @importorskip('pkg_resources')
 @pytest.mark.parametrize('package_type', ['pkg', 'egg'])
 def test_pkg_resources_provider_source(package_type, script_dir):
@@ -67,6 +72,7 @@ def test_pkg_resources_provider_source(package_type, script_dir):
     test_script = os.path.join(str(script_dir), test_script)
     ret = __exec_python_script(test_script, pathex=pathex)
     assert ret == 0, "Test script failed!"
+
 
 @importorskip('pkg_resources')
 @pytest.mark.parametrize('package_type', ['pkg', 'egg'])

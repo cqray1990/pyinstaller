@@ -358,7 +358,7 @@ try:
     content = resource_listdir(pkgname + '.subpkg1', 'data/entry1.txt')
 except NotADirectoryError:
     assert is_default
-except:
+except Exception:
     raise
 else:
     assert (is_zip or is_frozen) and content == []
@@ -372,7 +372,7 @@ try:
     content = resource_listdir(pkgname, 'non-existant')
 except FileNotFoundError:
     assert is_default
-except:
+except Exception:
     raise
 else:
     assert (is_zip or is_frozen) and content == []
@@ -385,7 +385,7 @@ try:
     content = resource_listdir(pkgname + '.subpkg1', 'data/non-existant')
 except FileNotFoundError:
     assert is_default
-except:
+except Exception:
     raise
 else:
     assert (is_zip or is_frozen) and content == []
@@ -511,4 +511,4 @@ assert set(resource_listdir(pkgname + '.a', '')) == \
 # Attempt to list submodule in subpackage - should give the same results
 # as listing the subpackage itself
 assert set(resource_listdir(pkgname + '.subpkg1.c', '')) == \
-       set(resource_listdir(pkgname + '.subpkg1', '')) # empty path!
+       set(resource_listdir(pkgname + '.subpkg1', ''))  # empty path!

@@ -63,7 +63,8 @@ def test_pkg_resources_provider_source(package_type, script_dir):
     pathex = __get_test_package_path(package_type)
     test_script = 'pyi_pkg_resources_provider.py'
 
-    test_script = os.path.join(script_dir, test_script)
+    # NOTE: str() is needed for python 3.5
+    test_script = os.path.join(str(script_dir), test_script)
     ret = __exec_python_script(test_script, pathex=pathex)
     assert ret == 0, "Test script failed!"
 

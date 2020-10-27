@@ -24,7 +24,6 @@ import pytest
 from PyInstaller.utils.tests import importorskip
 from PyInstaller.compat import exec_python_rc
 
-# :todo: find a way to get this from `conftest` or such
 # Directory with testing modules used in some tests.
 _MODULES_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),

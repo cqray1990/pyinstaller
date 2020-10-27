@@ -41,7 +41,7 @@ def __exec_python_script(script_filename, *args, pathex=None):
     # ... and prepend PYTHONPATH with pathex
     if pathex:
         if 'PYTHONPATH' in env:
-            pathex = os.pathsep.join([env.get('PYTHONPATH'), pathex])
+            pathex = os.pathsep.join([pathex, env.get('PYTHONPATH')])
         env['PYTHONPATH'] = pathex
 
     return exec_python_rc(*cmd, env=env)

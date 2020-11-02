@@ -56,8 +56,6 @@ if pyside2_library_info.version:
             datas += collect_system_data_files(
                 os.path.join(data_path, 'lib', framework_dir),
                 prefix_with_path(rel_data_path, 'lib', framework_dir), True)
-        datas += [(os.path.join(data_path, 'lib', 'QtWebEngineCore.framework',
-                                'Resources'), os.curdir)]
     else:
         locales = 'qtwebengine_locales'
         resources = 'resources'

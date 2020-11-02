@@ -321,6 +321,10 @@ def mac_set_relative_dylib_deps(libname, distname):
         if any([x in pth for x in _exemptions]):
             return None
 
+        # Exempt Qt5 framework libraries
+        if '.framework/Versions/5' in pth:
+            return None
+
         # Use relative path to dependent dynamic libraries based on the
         # location of the executable.
         return os.path.join('@loader_path', parent_dir, os.path.basename(pth))

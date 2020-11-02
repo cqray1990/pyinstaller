@@ -165,7 +165,7 @@ def qt_plugins_binaries(plugin_type, namespace):
     if namespace == 'PyQt5':
         plugin_dir = os.path.join('PyQt5', 'Qt', 'plugins')
     else:
-        plugin_dir = os.path.join('PySide2', 'plugins')
+        plugin_dir = os.path.join('PySide2', 'Qt', 'plugins')
     dest_dir = os.path.join(plugin_dir, plugin_type)
     binaries = [(f, dest_dir) for f in files]
     return binaries

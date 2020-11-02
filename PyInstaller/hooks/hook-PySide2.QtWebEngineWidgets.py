@@ -49,7 +49,8 @@ if pyside2_library_info.version:
         data_path = pyside2_locations['DataPath']
         libraries = ['QtCore', 'QtWebEngineCore', 'QtQuick', 'QtQml',
                      'QtQmlModels', 'QtNetwork', 'QtGui', 'QtWebChannel',
-                     'QtPositioning']
+                     'QtPositioning', 'QtWidgets', 'QtWebEngineWidgets',
+                     'QtPrintSupport', 'QtQuickWidgets', 'QtDBus']
         for i in libraries:
             framework_dir = i + '.framework'
             datas += collect_system_data_files(

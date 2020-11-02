@@ -28,7 +28,8 @@ if pyqt5_library_info.version:
         data_path = pyqt5_library_info.location['DataPath']
         libraries = ['QtCore', 'QtWebEngineCore', 'QtQuick', 'QtQml',
                      'QtQmlModels', 'QtNetwork', 'QtGui', 'QtWebChannel',
-                     'QtPositioning']
+                     'QtPositioning', 'QtWidgets', 'QtWebEngineWidgets',
+                     'QtPrintSupport', 'QtQuickWidgets', 'QtDBus']
         for i in libraries:
             framework_dir = i + '.framework'
             datas += collect_system_data_files(

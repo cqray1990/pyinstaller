@@ -26,7 +26,7 @@ if pyside2_library_info.version:
     if not os.path.exists(qmldir):
         logger.warning('Unable to find Qt5 QML files. QML files not packaged.')
     else:
-        qml_rel_dir = ['PySide2', 'qml']
+        qml_rel_dir = ['PySide2', 'Qt', 'qml']
         datas += [(qmldir, os.path.join(*qml_rel_dir))]
         binaries += [
             # Produce ``/path/to/Qt/Qml/path_to_qml_binary/qml_binary,

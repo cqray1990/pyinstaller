@@ -45,18 +45,9 @@ if pyside2_library_info.version:
 
     pyside2_locations = pyside2_library_info.location
     if compat.is_darwin:
-        # This is based on the layout of the Mac wheel from PyPi.
-        data_path = pyside2_locations['DataPath']
-        libraries = ['QtCore', 'QtWebEngineCore', 'QtQuick', 'QtQml',
-                     'QtQmlModels', 'QtNetwork', 'QtGui', 'QtWebChannel',
-                     'QtPositioning']
-        for i in libraries:
-            framework_dir = i + '.framework'
-            datas += collect_system_data_files(
-                os.path.join(data_path, 'lib', framework_dir),
-                prefix_with_path(rel_data_path, 'lib', framework_dir), True)
-        datas += [(os.path.join(data_path, 'lib', 'QtWebEngineCore.framework',
-                                'Resources'), os.curdir)]
+        # All resources should be automatically collected as part
+        # of framework bundle collection...
+        pass
     else:
         locales = 'qtwebengine_locales'
         resources = 'resources'

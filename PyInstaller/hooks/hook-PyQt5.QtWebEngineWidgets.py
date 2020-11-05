@@ -26,6 +26,7 @@ if pyqt5_library_info.version:
     if compat.is_darwin:
         # All resources should be automatically collected as part
         # of framework bundle collection...
+        pass
     else:
         locales = 'qtwebengine_locales'
         resources = 'resources'

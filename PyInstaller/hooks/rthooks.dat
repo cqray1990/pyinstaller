@@ -12,7 +12,6 @@
     'matplotlib': ['pyi_rth_mplconfig.py'],
     'pkg_resources':  ['pyi_rth_pkgres.py'],
     'PyQt5':      ['pyi_rth_pyqt5.py'],
-    'PyQt5.QtWebEngineWidgets': ['pyi_rth_pyqt5webengine.py'],
     'PySide2':      ['pyi_rth_pyside2.py'],
     'PySide2.QtWebEngineWidgets': ['pyi_rth_pyside2webengine.py'],
     '_tkinter':    ['pyi_rth__tkinter.py'],

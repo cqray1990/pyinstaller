@@ -24,18 +24,8 @@ if pyqt5_library_info.version:
     # Include the web engine process, translations, and resources.
     rel_data_path = ['PyQt5', 'Qt']
     if compat.is_darwin:
-        # This is based on the layout of the Mac wheel from PyPi.
-        data_path = pyqt5_library_info.location['DataPath']
-        libraries = ['QtCore', 'QtWebEngineCore', 'QtQuick', 'QtQml',
-                     'QtQmlModels', 'QtNetwork', 'QtGui', 'QtWebChannel',
-                     'QtPositioning']
-        for i in libraries:
-            framework_dir = i + '.framework'
-            datas += collect_system_data_files(
-                os.path.join(data_path, 'lib', framework_dir),
-                os.path.join(*rel_data_path, 'lib', framework_dir), True)
-        datas += [(os.path.join(data_path, 'lib', 'QtWebEngineCore.framework',
-                                'Resources'), os.curdir)]
+        # All resources should be automatically collected as part
+        # of framework bundle collection...
     else:
         locales = 'qtwebengine_locales'
         resources = 'resources'

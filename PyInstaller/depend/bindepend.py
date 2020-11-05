@@ -1010,6 +1010,7 @@ def collectFrameworkBundles(binaries):
         if fwk_name not in seen_frameworks:
             _EXTRA_DIRS = (
                 ("Resources", 'DATA'),
+                ("Helpers", 'DATA'),
             )
 
             for extra_dir, extra_dir_type in _EXTRA_DIRS:

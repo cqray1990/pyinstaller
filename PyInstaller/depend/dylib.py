@@ -259,6 +259,19 @@ def include_library(libname):
         # By default include library.
         return True
 
+def _mac_get_dylib_framework_path(libpath):
+    import pathlib
+    libpath = pathlib.PurePath(libpath)
+
+    libname = libpath.name
+    framework_name = str(libname) + ".framework"
+
+    # Check all parents
+    for parent in libpath.parents:
+        if parent.name == framework_name:
+            return str(parent)
+
+    return None
 
 def mac_set_relative_dylib_deps(libname, distname):
     """
@@ -320,6 +333,17 @@ def mac_set_relative_dylib_deps(libname, distname):
         ]
         if any([x in pth for x in _exemptions]):
             return None
+
+        # Check if the given dynamic library is a part of a framework bundle
+        fwk_pth = _mac_get_dylib_framework_path(pth)
+        if fwk_pth is not None:
+            fwk_name = os.path.basename(fwk_pth)  # framework name
+            fwk_lib_pth = os.path.relpath(pth, fwk_pth)  # framework-relative path
+
+            # Use relative path to dependent dynamic libraries, located
+            # within the .framework that is placed at the location of
+            # the executable
+            return os.path.join('@loader_path', parent_dir, fwk_name, fwk_lib_pth)
 
         # Use relative path to dependent dynamic libraries based on the
         # location of the executable.

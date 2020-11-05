@@ -31,7 +31,7 @@ from .. import HOMEPATH, DEFAULT_DISTPATH, DEFAULT_WORKPATH
 from .. import compat
 from .. import log as logging
 from ..utils.misc import absnormpath, compile_py_files
-from ..compat import is_win, PYDYLIB_NAMES, open_file
+from ..compat import is_win, is_darwin, PYDYLIB_NAMES, open_file
 from ..depend import bindepend
 from ..depend.analysis import initialize_modgraph
 from .api import PYZ, EXE, COLLECT, MERGE
@@ -463,8 +463,19 @@ class Analysis(Target):
         # Add remaining binary dependencies - analyze Python C-extensions and what
         # DLLs they depend on.
         logger.info('Looking for dynamic libraries')
-        self.binaries.extend(bindepend.Dependencies(self.binaries,
-                                                    redirects=self.binding_redirects))
+        tmp_binaries = bindepend.Dependencies(self.binaries,
+                                              redirects=self.binding_redirects)
+
+        # On macOS, collect/reconstruct parent framework bundles for
+        # dynamic libraries
+        if is_darwin:
+            tmp_binaries, tmp_datas = \
+                bindepend.collectFrameworkBundles(tmp_binaries)
+
+            self.binaries.extend(tmp_binaries)
+            self.datas.extend(tmp_datas)
+        else:
+            self.binaries.extend(tmp_binaries)
 
         ### Include zipped Python eggs.
         logger.info('Looking for eggs')

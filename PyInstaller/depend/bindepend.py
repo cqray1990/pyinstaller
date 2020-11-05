@@ -961,3 +961,68 @@ def findSystemLibrary(name):
     else:
         # This seems to work, and is similar to what we have above..
         return ctypes.util.find_library(name)
+
+
+from ..building.datastruct import Tree
+
+def _mac_get_dylib_framework_path(libpath):
+    import pathlib
+    libpath = pathlib.PurePath(libpath)
+
+    libname = libpath.name
+    framework_name = str(libname) + ".framework"
+
+    # Check all parents
+    for parent in libpath.parents:
+        if parent.name == framework_name:
+            return str(parent)
+
+    return None
+
+def collectFrameworkBundles(binaries):
+    ret_datas = []
+    ret_binaries = []
+
+    seen_frameworks = set()
+    remaining_binaries = []
+
+    # 1st pass: identify all framework bundles
+    for name, path, bintype in binaries:
+        # Skip the Python library/framework for now...
+        if '/Library/Frameworks/Python.framework' in path or bintype != 'BINARY':
+            remaining_binaries.append((name, path, bintype))
+            continue
+
+        # Try to identify framework bundle path
+        fwk_path = _mac_get_dylib_framework_path(path)
+        if fwk_path is None:
+            remaining_binaries.append((name, path, bintype))
+            continue
+
+        # There is a framework to collect...
+        fwk_name = os.path.basename(fwk_path)  # framework name
+        fwk_lib_pth = os.path.relpath(path, fwk_path)  # framework-relative path
+
+        # Adjust binary path
+        ret_binaries.append((os.path.join(fwk_name, fwk_lib_pth), path, bintype))
+
+        # Collect data from other directories (e.g., Resources)
+        if fwk_name not in seen_frameworks:
+            _EXTRA_DIRS = (
+                ("Resources", 'DATA'),
+            )
+
+            for extra_dir, extra_dir_type in _EXTRA_DIRS:
+                src_path = os.path.join(fwk_path, extra_dir)
+
+                if os.path.exists(src_path):
+                    dst_path = os.path.join(fwk_name, extra_dir)
+                    ret_datas += Tree(src_path, prefix=dst_path, typecode=extra_dir_type)
+
+            seen_frameworks.add(fwk_name)
+
+    # FIXME: 2nd pass - check if any remaining binaries belong in a
+    # framework...
+    ret_binaries.extend(remaining_binaries)
+
+    return ret_binaries, ret_datas

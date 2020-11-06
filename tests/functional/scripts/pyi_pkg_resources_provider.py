@@ -260,62 +260,53 @@ assert resource_isdir(pkgname + '.subpkg1.c', '') is True
 ########################################################################
 #               Validate behavior of resource_listdir()                #
 ########################################################################
+# A helper for resource_listdir() tests.
+def _listdir_test (pkgname, path, expected):
+    expected = set(expected)
+    # For frozen application, remove .py files from expected results
+    if is_frozen:
+        expected = {x for x in expected if not x.endswith('.py')}
+    # List the content
+    content = set(resource_listdir(pkgname, path))
+    # Ignore pycache
+    if '__pycache__' in content:
+        content.remove('__pycache__')  # ignore __pycache__
+    assert content == expected
+
 # List package's top-level directory
 #  * DefaultProvider lists the directory
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
-expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname, '.')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert (is_default and content == expected) or \
-       (is_zip and content == set()) or \
-       (is_frozen and content == expected)
+if is_zip:
+    expected = []
+else:
+    expected = ['__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3']
+_listdir_test(pkgname, '.', expected)
 
 # List package's top-level directory, with empty path
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
-expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname, '')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3']
+_listdir_test(pkgname, '', expected)
 
 # List subpackage's directory (relative to main package)
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
-expected = {'__init__.py', 'c.py', 'd.py', 'data'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname, 'subpkg1')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'c.py', 'd.py', 'data']
+_listdir_test(pkgname, 'subpkg1', expected)
 
 # List data directory in subpackage (relative to main package)
-expected = {'entry1.txt', 'entry2.txt', 'entry3.txt', 'extra'}
-content = resource_listdir(pkgname, 'subpkg1/data')
-content = set(content)
-assert content == expected
+expected = ['entry1.txt', 'entry2.txt', 'entry3.txt', 'extra']
+_listdir_test(pkgname, 'subpkg1/data', expected)
 
 # List data directory in subpackage (relative to subpackage itself)
-content = resource_listdir(pkgname + '.subpkg1', 'data')
-content = set(content)
-assert content == expected
+expected = ['entry1.txt', 'entry2.txt', 'entry3.txt', 'extra']
+_listdir_test(pkgname + '.subpkg1', 'data', expected)
 
 # List data in subdirectory of data directory in subpackage
-expected = {'extra_entry1.txt'}
-content = resource_listdir(pkgname + '.subpkg1', 'data/extra')
-content = set(content)
-assert content == expected
+expected = ['extra_entry1.txt']
+_listdir_test(pkgname + '.subpkg1', 'data/extra', expected)
 
 # Attempt to list a file (existing resource but not a directory).
 #  * DefaultProvider raises NotADirectoryError
@@ -373,71 +364,36 @@ assert (is_default and pkgname in content) or \
 #  > PyiFrozenProvider disallows jumping to parent, and returns False
 # NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
 # will raise exception in a future release
-expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname + '.subpkg1', '..')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert (is_default and content == expected) or \
-       (is_zip and content == set()) or \
-       (is_frozen and content == set())
+if is_default:
+    expected = ['__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3']
+else:
+    expected = []
+_listdir_test(pkgname + '.subpkg1', '..', expected)
 
 # Attempt to list directory of subpackage that has no data files or
 # directories (relative to main package)
-expected = {'__init__.py', 'mod.py', 'subsubpkg21'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname, 'subpkg2')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'mod.py', 'subsubpkg21']
+_listdir_test(pkgname, 'subpkg2', expected)
 
 # Attempt to list directory of subpackage that has no data files or
 # directories (relative to subpackage itself)
-expected = {'__init__.py', 'mod.py', 'subsubpkg21'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname + '.subpkg2', '')  # empty path!
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'mod.py', 'subsubpkg21']
+_listdir_test(pkgname + '.subpkg2', '', expected)  # empty path!
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to main package)
-expected = {'__init__.py', 'mod.py'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname, 'subpkg2/subsubpkg21')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'mod.py']
+_listdir_test(pkgname, 'subpkg2/subsubpkg21', expected)
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to parent subpackage)
-expected = {'__init__.py', 'mod.py'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname + '.subpkg2', 'subsubpkg21')
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'mod.py']
+_listdir_test(pkgname + '.subpkg2', 'subsubpkg21', expected)
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to subsubpackage itself)
-expected = {'__init__.py', 'mod.py'}
-if is_frozen:
-    expected = {x for x in expected if not x.endswith('.py')}
-content = resource_listdir(pkgname + '.subpkg2.subsubpkg21', '')  # empty path!
-content = set(content)
-if '__pycache__' in content:
-    content.remove('__pycache__')  # ignore __pycache__
-assert content == expected
+expected = ['__init__.py', 'mod.py']
+_listdir_test(pkgname + '.subpkg2.subsubpkg21', '', expected)  # empty path!
 
 # Attempt to list submodule in main package - should give the same results
 # as listing the package itself

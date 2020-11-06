@@ -8,7 +8,19 @@
 #
 # SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
-
+#
+# These tests run a test script (scripts/pyi_pkg_resources_provider.py)
+# in unfrozen and frozen form, in combination with a custom test package
+# (modules/pyi_pkg_resources_provider/package) in either source or
+# zipped egg form.
+#
+# Running the unfrozen test script allows us to verify the behavior of
+# DefaultProvider and ZipProvider from pkg_resources and thereby also
+# validate the test script itself. Running the frozen test validates
+# the behavior of the PyiFrozenProvider.
+#
+# For details on the structure of the test and the contents of the test
+# package, see the top comment in the test script itself.
 
 # Library imports
 # ---------------

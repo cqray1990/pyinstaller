@@ -8,8 +8,7 @@
 #
 # SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
-
-
+#
 # A test script for validation of pkg_resources provider implementation.
 #
 # The test package has the following structure:
@@ -38,7 +37,7 @@
 #     ├── _datafile.txt
 #     └── __init__.py
 #
-# When run as native python script, this script can be used to check the
+# When run as unfrozen script, this script can be used to check the
 # behavior of "native" providers that come with pkg_resources, e.g.,
 # DefaultProvider (for regular packages) and ZipProvider (for eggs).
 #
@@ -63,8 +62,7 @@ is_default = isinstance(provider, DefaultProvider)
 is_zip = isinstance(provider, ZipProvider)
 is_frozen = getattr(sys, 'frozen', False)
 
-assert any([is_default, is_zip, is_frozen]), "Unsupported provider type!"
-
+assert is_default or is_zip or is_frozen, "Unsupported provider type!"
 
 ########################################################################
 #                Validate behavior of resource_exists()                #
@@ -79,9 +77,7 @@ assert (is_default and ret is True) or \
        (is_frozen and ret is True)
 
 # Package's directory, with empty path
-ret = resource_exists(pkgname, '')
-assert ret is True
-
+assert resource_exists(pkgname, '') is True
 
 # Subpackage's directory (relative to main package):
 assert resource_exists(pkgname, 'subpkg1') is True
@@ -99,9 +95,7 @@ assert (is_default and ret is True) or \
        (is_frozen and ret is True)
 
 # Subpackage's directory (relative to subpackage itself), with empty path:
-ret = resource_exists(pkgname + '.subpkg1', '')
-assert ret is True
-
+assert resource_exists(pkgname + '.subpkg1', '') is True
 
 # Data directory in subpackage
 assert resource_exists(pkgname, 'subpkg1/data') is True
@@ -131,8 +125,8 @@ assert (not is_frozen and ret is True) or \
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider disallows jumping to parent, and returns False
-# NOTE: using .. in path is deprecated and will raise exception in
-# future pkg_resources release
+# NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
+# will raise exception in a future release
 ret = resource_exists(pkgname, '..')
 assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
@@ -142,13 +136,12 @@ assert (is_default and ret is True) or \
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider disallows jumping to parent, and returns False
-# NOTE: using .. in path is deprecated and will raise exception in
-# future pkg_resources release
+# NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
+# will raise exception in a future release
 ret = resource_exists(pkgname + '.subpkg1', '..')
 assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
        (is_frozen and ret is False)
-
 
 # Submodule in main package
 ret = resource_exists(pkgname + '.a', '.')
@@ -156,8 +149,8 @@ assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
        (is_frozen and ret is True)
 
-ret = resource_exists(pkgname + '.a', '')
-assert ret is True
+# Submodule in main package, with empty path
+assert resource_exists(pkgname + '.a', '') is True
 
 # Submodule in subpackage
 ret = resource_exists(pkgname + '.subpkg1.c', '.')
@@ -165,9 +158,8 @@ assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
        (is_frozen and ret is True)
 
-ret = resource_exists(pkgname + '.subpkg1.c', '')
-assert ret is True
-
+# Submodule in subpackage, with empty path
+assert resource_exists(pkgname + '.subpkg1.c', '') is True
 
 ########################################################################
 #                Validate behavior of resource_isdir()                 #
@@ -182,9 +174,7 @@ assert (is_default and ret is True) or \
        (is_frozen and ret is True)
 
 # Package's directory, with empty path
-ret = resource_isdir(pkgname, '')
-assert ret is True
-
+assert resource_isdir(pkgname, '') is True
 
 # Subpackage's directory (relative to main pacakge):
 #  * both DefaultProvider and ZipProvider return True
@@ -203,9 +193,7 @@ assert (is_default and ret is True) or \
        (is_frozen and ret is True)
 
 # Subpackage's directory (relative to subpackage itself), with empty path:
-ret = resource_isdir(pkgname + '.subpkg1', '')
-assert ret is True
-
+assert resource_isdir(pkgname + '.subpkg1', '') is True
 
 # Data directory in subpackage
 assert resource_isdir(pkgname, 'subpkg1/data') is True
@@ -233,8 +221,8 @@ assert resource_isdir(pkgname, '__init__.py') is False
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider disallows jumping to parent, and returns False
-# NOTE: using .. in path is deprecated and will raise exception in
-# future pkg_resources release
+# NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
+# will raise exception in a future release
 ret = resource_isdir(pkgname, '..')
 assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
@@ -244,13 +232,12 @@ assert (is_default and ret is True) or \
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider disallows jumping to parent, and returns False
-# NOTE: using .. in path is deprecated and will raise exception in
-# future pkg_resources release
+# NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
+# will raise exception in a future release
 ret = resource_isdir(pkgname + '.subpkg1', '..')
 assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
        (is_frozen and ret is False)
-
 
 # Submodule in main package
 ret = resource_isdir(pkgname + '.a', '.')
@@ -258,8 +245,8 @@ assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
        (is_frozen and ret is True)
 
-ret = resource_isdir(pkgname + '.a', '')
-assert ret is True
+# Submodule in main package, with empty path
+assert resource_isdir(pkgname + '.a', '') is True
 
 # Submodule in subpackage
 ret = resource_isdir(pkgname + '.subpkg1.c', '.')
@@ -267,9 +254,8 @@ assert (is_default and ret is True) or \
        (is_zip and ret is False) or \
        (is_frozen and ret is True)
 
-ret = resource_isdir(pkgname + '.subpkg1.c', '')
-assert ret is True
-
+# Submodule in subpackage, with empty path
+assert resource_isdir(pkgname + '.subpkg1.c', '') is True
 
 ########################################################################
 #               Validate behavior of resource_listdir()                #
@@ -280,16 +266,12 @@ assert ret is True
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
 expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname, '.')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert (is_default and content == expected) or \
        (is_zip and content == set()) or \
        (is_frozen and content == expected)
@@ -298,57 +280,42 @@ assert (is_default and content == expected) or \
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
 expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname, '')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
-
 
 # List subpackage's directory (relative to main package)
 #  > PyiFrozenProvider lists the directory, but does not provide source
 #    .py files
 expected = {'__init__.py', 'c.py', 'd.py', 'data'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname, 'subpkg1')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
 
 # List data directory in subpackage (relative to main package)
 expected = {'entry1.txt', 'entry2.txt', 'entry3.txt', 'extra'}
-
 content = resource_listdir(pkgname, 'subpkg1/data')
 content = set(content)
-
 assert content == expected
 
 # List data directory in subpackage (relative to subpackage itself)
 content = resource_listdir(pkgname + '.subpkg1', 'data')
 content = set(content)
-
 assert content == expected
 
 # List data in subdirectory of data directory in subpackage
 expected = {'extra_entry1.txt'}
-
 content = resource_listdir(pkgname + '.subpkg1', 'data/extra')
 content = set(content)
-
 assert content == expected
-
 
 # Attempt to list a file (existing resource but not a directory).
 #  * DefaultProvider raises NotADirectoryError
@@ -362,7 +329,6 @@ except Exception:
     raise
 else:
     assert (is_zip or is_frozen) and content == []
-
 
 # Attempt to list an non-existant directory in main package.
 #  * DefaultProvider raises FileNotFoundError
@@ -390,15 +356,13 @@ except Exception:
 else:
     assert (is_zip or is_frozen) and content == []
 
-
 # Attempt to list pacakge's parent directory
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider disallows jumping to parent, and returns empty list
-# NOTE: using .. in path is deprecated and will raise exception in
-# future pkg_resources release
+# NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
+# will raise exception in a future release
 content = resource_listdir(pkgname, '..')
-
 assert (is_default and pkgname in content) or \
        (is_zip and content == []) or \
        (is_frozen and content == [])
@@ -407,106 +371,78 @@ assert (is_default and pkgname in content) or \
 #  * DefaultProvider actually lists the parent directory
 #  * ZipProvider returns empty list
 #  > PyiFrozenProvider disallows jumping to parent, and returns False
-# NOTE: using .. in path is deprecated and will raise exception in
-# future pkg_resources release
+# NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
+# will raise exception in a future release
 expected = {'__init__.py', 'a.py', 'b.py', 'subpkg1', 'subpkg2', 'subpkg3'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname + '.subpkg1', '..')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert (is_default and content == expected) or \
        (is_zip and content == set()) or \
        (is_frozen and content == set())
 
-
 # Attempt to list directory of subpackage that has no data files or
 # directories (relative to main package)
 expected = {'__init__.py', 'mod.py', 'subsubpkg21'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname, 'subpkg2')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
 
 # Attempt to list directory of subpackage that has no data files or
 # directories (relative to subpackage itself)
 expected = {'__init__.py', 'mod.py', 'subsubpkg21'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname + '.subpkg2', '')  # empty path!
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
-
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to main package)
 expected = {'__init__.py', 'mod.py'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname, 'subpkg2/subsubpkg21')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to parent subpackage)
 expected = {'__init__.py', 'mod.py'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname + '.subpkg2', 'subsubpkg21')
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
 
 # Attempt to list directory of subsubpackage that has no data
 # files/directories (relative to subsubpackage itself)
 expected = {'__init__.py', 'mod.py'}
-
 if is_frozen:
     expected = {x for x in expected if not x.endswith('.py')}
-
 content = resource_listdir(pkgname + '.subpkg2.subsubpkg21', '')  # empty path!
 content = set(content)
-
 if '__pycache__' in content:
     content.remove('__pycache__')  # ignore __pycache__
-
 assert content == expected
-
 
 # Attempt to list submodule in main package - should give the same results
 # as listing the package itself
 assert set(resource_listdir(pkgname + '.a', '')) == \
        set(resource_listdir(pkgname, ''))  # empty path!
-
 
 # Attempt to list submodule in subpackage - should give the same results
 # as listing the subpackage itself

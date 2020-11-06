@@ -151,11 +151,12 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
         # Embedded resources have precedence over filesystem...
         rel_path = path.relative_to(SYS_PREFIX)
-        if self.embedded_tree.path_isdir(rel_path):
-            return True
-        elif not self.embedded_tree.path_exists(rel_path):
-            return False  # An embedded file takes precedence over filesystem
-        return path.is_dir()
+        node = self.embedded_tree._get_tree_node(rel_path)
+        if node is None:
+            return path.is_dir()  # No match found; try the filesystem
+        else:
+            # str = file, dict = directory
+            return not isinstance(node, str)
 
     def _listdir(self, path):
         # Prevent access outside the package

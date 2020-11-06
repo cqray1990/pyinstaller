@@ -24,13 +24,14 @@ SYS_PREFIX = pathlib.PurePath(sys._MEIPASS)
 # and other stuff. 'pkg_resources.NullProvider' is dedicated to PEP302
 # import hooks like FrozenImporter is. It uses method __loader__.get_data() in
 # methods pkg_resources.resource_string() and pkg_resources.resource_stream()
-
+#
 # We subclass the NullProvider and implement _has(), _isdir(), and _listdir(),
 # which are needed for pkg_resources.resource_exists(), resource_isdir(),
 # and resource_listdir() to work. We cannot use the DefaultProvider,
 # because it provides filesystem-only implementations (and overrides _get()
 # with a filesystem-only one), whereas our provider needs to also support
 # embedded resources.
+
 
 class _TocFilesystem:
     def __init__(self, toc_files, toc_dirs=[]):
@@ -42,7 +43,6 @@ class _TocFilesystem:
         for path in toc_files:
             path = pathlib.PurePath(path)
             current = self._tree
-
             for component in path.parts[:-1]:
                 current = current.setdefault(component, {})
             current[path.parts[-1]] = ''
@@ -51,19 +51,16 @@ class _TocFilesystem:
         for path in toc_dirs:
             path = pathlib.PurePath(path)
             current = self._tree
-
             for component in path.parts:
                 current = current.setdefault(component, {})
 
     def _get_tree_node(self, path):
         path = pathlib.PurePath(path)
-
         current = self._tree
         for component in path.parts:
             if component not in current:
                 return None
             current = current[component]
-
         return current
 
     def path_exists(self, path):
@@ -72,21 +69,16 @@ class _TocFilesystem:
 
     def path_isdir(self, path):
         node = self._get_tree_node(path)
-
         if node is None:
             return False  # Non-existant
-
         if isinstance(node, str):
             return False  # File
-
         return True
 
     def path_listdir(self, path):
         node = self._get_tree_node(path)
-
         if not isinstance(node, dict):
             return []  # Non-existant or file
-
         return list(node.keys())
 
 
@@ -114,10 +106,8 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
         # name (to reconstruct subpackage directories)
         data_files = []
         package_dirs = []
-
         for entry in self.loader.toc:
             entry_path = pathlib.PurePath(entry)
-
             if rel_pkg_path in entry_path.parents:
                 # Data file path
                 data_files.append(entry_path)
@@ -148,7 +138,6 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
         # Relative path for searching embedded resources
         rel_path = path.relative_to(SYS_PREFIX)
-
         return self.embedded_tree.path_exists(rel_path) or path.exists()
 
     def _isdir(self, path):
@@ -159,7 +148,6 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
         # Relative path for searching embedded resources
         rel_path = path.relative_to(SYS_PREFIX)
-
         return self.embedded_tree.path_isdir(rel_path) or path.is_dir()
 
     def _listdir(self, path):
@@ -170,17 +158,14 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
         # Relative path for searching embedded resources
         rel_path = path.relative_to(SYS_PREFIX)
-
         # List content from embedded filesystem...
         content = self.embedded_tree.path_listdir(rel_path)
-
         # ... as well as the actual one
         if path.is_dir():
             # Use os.listdir() to avoid having to convert Path objects
             # to strings...
-            path = str(path)  # python 3.5
+            path = str(path)  # not is_py36
             content += os.listdir(path)
-
         return content
 
 

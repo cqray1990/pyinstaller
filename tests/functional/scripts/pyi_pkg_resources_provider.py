@@ -21,10 +21,10 @@
 # │   ├── c.py
 # │   ├── data
 # │   │   ├── entry1.txt
-# │   │   ├── entry2.txt
-# │   │   ├── entry3.txt
+# │   │   ├── entry2.md
+# │   │   ├── entry3.rst
 # │   │   └── extra
-# │   │       └── extra_entry1.txt
+# │   │       └── extra_entry1.json
 # │   ├── d.py
 # │   └── __init__.py
 # ├── subpkg2
@@ -34,7 +34,7 @@
 # │       ├── __init__.py
 # │       └── mod.py
 # └── subpkg3
-#     ├── _datafile.txt
+#     ├── _datafile.json
 #     └── __init__.py
 #
 # When run as unfrozen script, this script can be used to check the
@@ -110,7 +110,7 @@ assert resource_exists(pkgname + '.subpkg1', 'data/extra') is True
 assert resource_exists(pkgname, 'subpkg1/data/entry1.txt') is True
 
 # Deeply nested data file
-assert resource_exists(pkgname, 'subpkg1/data/extra/extra_entry1.txt') is True
+assert resource_exists(pkgname, 'subpkg1/data/extra/extra_entry1.json') is True
 
 # A non-existant file/directory - should return False
 assert resource_exists(pkgname, 'subpkg1/non-existant') is False
@@ -209,7 +209,7 @@ assert resource_isdir(pkgname + '.subpkg1', 'data/extra') is True
 assert resource_isdir(pkgname, 'subpkg1/data/entry1.txt') is False
 
 # Deeply nested data file - should return False
-assert resource_isdir(pkgname, 'subpkg1/data/extra/extra_entry1.txt') is False
+assert resource_isdir(pkgname, 'subpkg1/data/extra/extra_entry1.json') is False
 
 # A non-existant file-directory - should return False
 assert resource_isdir(pkgname, 'subpkg1/non-existant') is False
@@ -300,15 +300,15 @@ expected = ['__init__.py', 'c.py', 'd.py', 'data']
 _listdir_test(pkgname, 'subpkg1', expected)
 
 # List data directory in subpackage (relative to main package)
-expected = ['entry1.txt', 'entry2.txt', 'entry3.txt', 'extra']
+expected = ['entry1.txt', 'entry2.md', 'entry3.rst', 'extra']
 _listdir_test(pkgname, 'subpkg1/data', expected)
 
 # List data directory in subpackage (relative to subpackage itself)
-expected = ['entry1.txt', 'entry2.txt', 'entry3.txt', 'extra']
+expected = ['entry1.txt', 'entry2.md', 'entry3.rst', 'extra']
 _listdir_test(pkgname + '.subpkg1', 'data', expected)
 
 # List data in subdirectory of data directory in subpackage
-expected = ['extra_entry1.txt']
+expected = ['extra_entry1.json']
 _listdir_test(pkgname + '.subpkg1', 'data/extra', expected)
 
 # Attempt to list a file (existing resource but not a directory).

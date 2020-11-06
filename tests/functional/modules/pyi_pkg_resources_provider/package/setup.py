@@ -24,8 +24,10 @@ setuptools.setup(
     package_data={
         "pyi_pkgres_testpkg": [
             "subpkg1/data/*.txt",
-            "subpkg1/data/extra/*.txt",
-            "subpkg3/*.txt",
+            "subpkg1/data/*.md",
+            "subpkg1/data/*.rst",
+            "subpkg1/data/extra/*.json",
+            "subpkg3/*.json",
         ],
     }
 )

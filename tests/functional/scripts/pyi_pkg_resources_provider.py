@@ -262,16 +262,15 @@ assert resource_isdir(pkgname + '.subpkg1.c', '') is True
 ########################################################################
 # A helper for resource_listdir() tests.
 def _listdir_test (pkgname, path, expected):
-    expected = set(expected)
     # For frozen application, remove .py files from expected results
     if is_frozen:
-        expected = {x for x in expected if not x.endswith('.py')}
+        expected = [x for x in expected if not x.endswith('.py')]
     # List the content
-    content = set(resource_listdir(pkgname, path))
+    content = resource_listdir(pkgname, path)
     # Ignore pycache
     if '__pycache__' in content:
         content.remove('__pycache__')  # ignore __pycache__
-    assert content == expected
+    assert sorted(content) == sorted(expected)
 
 # List package's top-level directory
 #  * DefaultProvider lists the directory
@@ -397,10 +396,10 @@ _listdir_test(pkgname + '.subpkg2.subsubpkg21', '', expected)  # empty path!
 
 # Attempt to list submodule in main package - should give the same results
 # as listing the package itself
-assert set(resource_listdir(pkgname + '.a', '')) == \
-       set(resource_listdir(pkgname, ''))  # empty path!
+assert sorted(resource_listdir(pkgname + '.a', '')) == \
+       sorted(resource_listdir(pkgname, ''))  # empty path!
 
 # Attempt to list submodule in subpackage - should give the same results
 # as listing the subpackage itself
-assert set(resource_listdir(pkgname + '.subpkg1.c', '')) == \
-       set(resource_listdir(pkgname + '.subpkg1', ''))  # empty path!
+assert sorted(resource_listdir(pkgname + '.subpkg1.c', '')) == \
+       sorted(resource_listdir(pkgname + '.subpkg1', ''))  # empty path!

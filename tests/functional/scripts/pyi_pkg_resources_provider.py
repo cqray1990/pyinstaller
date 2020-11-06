@@ -64,6 +64,7 @@ is_frozen = getattr(sys, 'frozen', False)
 
 assert is_default or is_zip or is_frozen, "Unsupported provider type!"
 
+
 ########################################################################
 #                Validate behavior of resource_exists()                #
 ########################################################################
@@ -161,6 +162,7 @@ assert (is_default and ret is True) or \
 # Submodule in subpackage, with empty path
 assert resource_exists(pkgname + '.subpkg1.c', '') is True
 
+
 ########################################################################
 #                Validate behavior of resource_isdir()                 #
 ########################################################################
@@ -257,11 +259,12 @@ assert (is_default and ret is True) or \
 # Submodule in subpackage, with empty path
 assert resource_isdir(pkgname + '.subpkg1.c', '') is True
 
+
 ########################################################################
 #               Validate behavior of resource_listdir()                #
 ########################################################################
 # A helper for resource_listdir() tests.
-def _listdir_test (pkgname, path, expected):
+def _listdir_test(pkgname, path, expected):
     # For frozen application, remove .py files from expected results
     if is_frozen:
         expected = [x for x in expected if not x.endswith('.py')]
@@ -271,6 +274,7 @@ def _listdir_test (pkgname, path, expected):
     if '__pycache__' in content:
         content.remove('__pycache__')  # ignore __pycache__
     assert sorted(content) == sorted(expected)
+
 
 # List package's top-level directory
 #  * DefaultProvider lists the directory

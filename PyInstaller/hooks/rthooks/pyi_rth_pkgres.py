@@ -81,8 +81,10 @@ class _TocFilesystem:
             return []  # Non-existant or file
         return list(node.keys())
 
+
 # A cache for reconstructed embedded trees
 _TOC_TREE_CACHE = {}
+
 
 class PyiFrozenProvider(pkg_resources.NullProvider):
     def __init__(self, module):
@@ -131,7 +133,8 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
 
             # Initialize and cache the tree, if necessary
             if pkg_name not in _TOC_TREE_CACHE:
-                _TOC_TREE_CACHE[pkg_name] = self._init_embedded_tree(rel_pkg_path, pkg_name)
+                _TOC_TREE_CACHE[pkg_name] = \
+                    self._init_embedded_tree(rel_pkg_path, pkg_name)
             self._embedded_tree = _TOC_TREE_CACHE[pkg_name]
         return self._embedded_tree
 

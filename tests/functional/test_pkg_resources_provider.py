@@ -12,7 +12,6 @@
 
 # Library imports
 # ---------------
-import copy
 import os
 import shutil
 
@@ -32,19 +31,15 @@ _MODULES_DIR = os.path.join(
 )
 
 
-def __exec_python_script(script_filename, *args, pathex=None):
-    cmd = [script_filename]
-    cmd.extend(args)
-
+def __exec_python_script(script_filename, pathex):
     # Prepare the environment - default to 'os.environ'...
-    env = copy.deepcopy(os.environ)
+    env = os.environ.copy()
     # ... and prepend PYTHONPATH with pathex
-    if pathex:
-        if 'PYTHONPATH' in env:
-            pathex = os.pathsep.join([pathex, env.get('PYTHONPATH')])
-        env['PYTHONPATH'] = pathex
-
-    return exec_python_rc(*cmd, env=env)
+    if 'PYTHONPATH' in env:
+        pathex = os.pathsep.join([pathex, env['PYTHONPATH']])
+    env['PYTHONPATH'] = pathex
+    # Run the test script
+    return exec_python_rc(script_filename, env=env)
 
 
 def __get_test_package_path(package_type, tmpdir, monkeypatch):
@@ -56,23 +51,20 @@ def __get_test_package_path(package_type, tmpdir, monkeypatch):
     # Source package
     if package_type == 'pkg':
         return src_path
-
     # Copy files to a tmpdir for building the egg.
     dest_path = tmpdir.join('src')
     shutil.copytree(src_path, dest_path.strpath)
     monkeypatch.chdir(dest_path)
-
     # Create an egg from the test package. For debug, show the output of
     # the egg build.
     print(exec_python('setup.py', 'bdist_egg'))
-
     # Obtain the name of the egg, which depends on the Python version.
     dist_path = dest_path.join('dist')
     files = os.listdir(dist_path.strpath)
     assert len(files) == 1
     egg_name = files[0]
     assert egg_name.endswith('.egg')
-
+    # Return the full path to the egg file
     return dist_path.join(egg_name).strpath
 
 
@@ -80,12 +72,12 @@ def __get_test_package_path(package_type, tmpdir, monkeypatch):
 @pytest.mark.parametrize('package_type', ['pkg', 'egg'])
 def test_pkg_resources_provider_source(package_type, tmpdir, script_dir,
                                        monkeypatch):
-    # Run the source python test script
+    # Run the test script unfrozen - to validate it is working and to
+    # verify the behavior of pkg_resources.DefaultProvider / ZipProvider.
     pathex = __get_test_package_path(package_type, tmpdir, monkeypatch)
     test_script = 'pyi_pkg_resources_provider.py'
-
-    # NOTE: str() is needed for python 3.5
-    test_script = os.path.join(str(script_dir), test_script)
+    test_script = os.path.join(str(script_dir),  # not is_py36: str()
+                               test_script)
     ret = __exec_python_script(test_script, pathex=pathex)
     assert ret == 0, "Test script failed!"
 
@@ -97,11 +89,9 @@ def test_pkg_resources_provider_frozen(pyi_builder, package_type, tmpdir,
     # Run the test script as a frozen program
     pathex = __get_test_package_path(package_type, tmpdir, monkeypatch)
     test_script = 'pyi_pkg_resources_provider.py'
-
     hooks_dir = os.path.join(_MODULES_DIR,
                              'pyi_pkg_resources_provider',
                              'hooks')
-
     pyi_builder.test_script(test_script, pyi_args=[
         '--paths', pathex,
         '--hidden-import', 'pyi_pkgres_testpkg',

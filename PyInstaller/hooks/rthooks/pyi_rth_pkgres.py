@@ -136,9 +136,12 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
         if not self._is_relative_to_package(path):
             return False
 
-        # Relative path for searching embedded resources
+        # Check the filesystem first to avoid unnecessarily computing
+        # the relative path...
+        if path.exists():
+            return True
         rel_path = path.relative_to(SYS_PREFIX)
-        return self.embedded_tree.path_exists(rel_path) or path.exists()
+        return self.embedded_tree.path_exists(rel_path)
 
     def _isdir(self, path):
         # Prevent access outside the package

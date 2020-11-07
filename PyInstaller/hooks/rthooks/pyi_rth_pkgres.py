@@ -98,7 +98,7 @@ class _TocFilesystem:
 
 
 # Cache for reconstructed embedded trees
-_TOC_TREE_CACHE = {}
+_toc_tree_cache = {}
 
 
 class PyiFrozenProvider(pkg_resources.NullProvider):
@@ -149,10 +149,10 @@ class PyiFrozenProvider(pkg_resources.NullProvider):
             pkg_name = '.'.join(rel_pkg_path.parts)
 
             # Initialize and cache the tree, if necessary
-            if pkg_name not in _TOC_TREE_CACHE:
-                _TOC_TREE_CACHE[pkg_name] = \
+            if pkg_name not in _toc_tree_cache:
+                _toc_tree_cache[pkg_name] = \
                     self._init_embedded_tree(rel_pkg_path, pkg_name)
-            self._embedded_tree = _TOC_TREE_CACHE[pkg_name]
+            self._embedded_tree = _toc_tree_cache[pkg_name]
         return self._embedded_tree
 
     def _normalize_path(self, path):

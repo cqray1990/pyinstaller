@@ -272,7 +272,7 @@ def _listdir_test(pkgname, path, expected):
     content = resource_listdir(pkgname, path)
     # Ignore pycache
     if '__pycache__' in content:
-        content.remove('__pycache__')  # ignore __pycache__
+        content.remove('__pycache__')
     assert sorted(content) == sorted(expected)
 
 

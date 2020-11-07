@@ -1,1 +1,5 @@
-Implement package content listing via ``pkg_resources``. Add a custom provider for ``FrozenImporter`` that enables support for ``pkg_resources.resource_exists()``, ``pkg_resources.resource_isdir()``, and ``pkg_resources.resource_listdir()``.
+Add support for package content listing via ``pkg_resources`` by
+implementing a custom ``PyiFrozenProvider`` for ``FrozenImporter``. The
+implementation enables querying/listing resources in a frozen package
+(both PYZ-embedded and on-filesystem, in that order of precedence) via
+``pkg_resources.resource_exists()``, ``resource_isdir()``, and ``resource_listdir()``.

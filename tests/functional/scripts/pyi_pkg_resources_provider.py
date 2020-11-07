@@ -73,54 +73,54 @@ assert is_default or is_zip or is_frozen, "Unsupported provider type!"
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
 ret = resource_exists(pkgname, '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Package's directory, with empty path
-assert resource_exists(pkgname, '') is True
+assert resource_exists(pkgname, '')
 
 # Subpackage's directory (relative to main package):
-assert resource_exists(pkgname, 'subpkg1') is True
-assert resource_exists(pkgname, 'subpkg2') is True
-assert resource_exists(pkgname, 'subpkg2/subsubpkg21') is True
-assert resource_exists(pkgname, 'subpkg3') is True
+assert resource_exists(pkgname, 'subpkg1')
+assert resource_exists(pkgname, 'subpkg2')
+assert resource_exists(pkgname, 'subpkg2/subsubpkg21')
+assert resource_exists(pkgname, 'subpkg3')
 
 # Subpackage's directory (relative to subpackage itself):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
 ret = resource_exists(pkgname + '.subpkg1', '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Subpackage's directory (relative to subpackage itself), with empty path:
-assert resource_exists(pkgname + '.subpkg1', '') is True
+assert resource_exists(pkgname + '.subpkg1', '')
 
 # Data directory in subpackage
-assert resource_exists(pkgname, 'subpkg1/data') is True
-assert resource_exists(pkgname + '.subpkg1', 'data') is True
+assert resource_exists(pkgname, 'subpkg1/data')
+assert resource_exists(pkgname + '.subpkg1', 'data')
 
 # Subdirectory in data directory
-assert resource_exists(pkgname, 'subpkg1/data/extra') is True
-assert resource_exists(pkgname + '.subpkg1', 'data/extra') is True
+assert resource_exists(pkgname, 'subpkg1/data/extra')
+assert resource_exists(pkgname + '.subpkg1', 'data/extra')
 
 # File in data directory
-assert resource_exists(pkgname, 'subpkg1/data/entry1.txt') is True
+assert resource_exists(pkgname, 'subpkg1/data/entry1.txt')
 
 # Deeply nested data file
-assert resource_exists(pkgname, 'subpkg1/data/extra/extra_entry1.json') is True
+assert resource_exists(pkgname, 'subpkg1/data/extra/extra_entry1.json')
 
 # A non-existant file/directory - should return False
-assert resource_exists(pkgname, 'subpkg1/non-existant') is False
+assert not resource_exists(pkgname, 'subpkg1/non-existant')
 
 # A source script file in package
 #  > PyiFrozenProvider returns False because frozen application does
 #    not contain source files
 ret = resource_exists(pkgname, '__init__.py')
-assert (not is_frozen and ret is True) or \
-       (is_frozen and ret is False)
+assert (not is_frozen and ret) or \
+       (is_frozen and not ret)
 
 # Parent of pacakge's top-level directory
 #  * DefaultProvider returns True
@@ -129,9 +129,9 @@ assert (not is_frozen and ret is True) or \
 # NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
 # will raise exception in a future release
 ret = resource_exists(pkgname, '..')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is False)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and not ret)
 
 # Parent of subpackage's directory
 #  * DefaultProvider returns True
@@ -140,27 +140,27 @@ assert (is_default and ret is True) or \
 # NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
 # will raise exception in a future release
 ret = resource_exists(pkgname + '.subpkg1', '..')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is False)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and not ret)
 
 # Submodule in main package
 ret = resource_exists(pkgname + '.a', '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Submodule in main package, with empty path
-assert resource_exists(pkgname + '.a', '') is True
+assert resource_exists(pkgname + '.a', '')
 
 # Submodule in subpackage
 ret = resource_exists(pkgname + '.subpkg1.c', '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Submodule in subpackage, with empty path
-assert resource_exists(pkgname + '.subpkg1.c', '') is True
+assert resource_exists(pkgname + '.subpkg1.c', '')
 
 
 ########################################################################
@@ -171,53 +171,53 @@ assert resource_exists(pkgname + '.subpkg1.c', '') is True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
 ret = resource_isdir(pkgname, '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Package's directory, with empty path
-assert resource_isdir(pkgname, '') is True
+assert resource_isdir(pkgname, '')
 
 # Subpackage's directory (relative to main pacakge):
 #  * both DefaultProvider and ZipProvider return True
-assert resource_isdir(pkgname, 'subpkg1') is True
-assert resource_isdir(pkgname, 'subpkg2') is True
-assert resource_isdir(pkgname, 'subpkg2/subsubpkg21') is True
-assert resource_isdir(pkgname, 'subpkg3') is True
+assert resource_isdir(pkgname, 'subpkg1')
+assert resource_isdir(pkgname, 'subpkg2')
+assert resource_isdir(pkgname, 'subpkg2/subsubpkg21')
+assert resource_isdir(pkgname, 'subpkg3')
 
 # Subpackage's directory (relative to subpackage itself):
 #  * DefaultProvider returns True
 #  * ZipProvider returns False
 #  > PyiFrozenProvider returns True
 ret = resource_isdir(pkgname + '.subpkg1', '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Subpackage's directory (relative to subpackage itself), with empty path:
-assert resource_isdir(pkgname + '.subpkg1', '') is True
+assert resource_isdir(pkgname + '.subpkg1', '')
 
 # Data directory in subpackage
-assert resource_isdir(pkgname, 'subpkg1/data') is True
-assert resource_isdir(pkgname + '.subpkg1', 'data') is True
+assert resource_isdir(pkgname, 'subpkg1/data')
+assert resource_isdir(pkgname + '.subpkg1', 'data')
 
 # Subdirectory in data directory
-assert resource_isdir(pkgname, 'subpkg1/data/extra') is True
-assert resource_isdir(pkgname + '.subpkg1', 'data/extra') is True
+assert resource_isdir(pkgname, 'subpkg1/data/extra')
+assert resource_isdir(pkgname + '.subpkg1', 'data/extra')
 
 # File in data directory - should return False
-assert resource_isdir(pkgname, 'subpkg1/data/entry1.txt') is False
+assert not resource_isdir(pkgname, 'subpkg1/data/entry1.txt')
 
 # Deeply nested data file - should return False
-assert resource_isdir(pkgname, 'subpkg1/data/extra/extra_entry1.json') is False
+assert not resource_isdir(pkgname, 'subpkg1/data/extra/extra_entry1.json')
 
 # A non-existant file-directory - should return False
-assert resource_isdir(pkgname, 'subpkg1/non-existant') is False
+assert not resource_isdir(pkgname, 'subpkg1/non-existant')
 
 # A source script file in package - should return False
 # NOTE: PyFrozenProvider returns False because the file does not
 # exist.
-assert resource_isdir(pkgname, '__init__.py') is False
+assert not resource_isdir(pkgname, '__init__.py')
 
 # Parent of package's top-level directory
 #  * DefaultProvider returns True
@@ -226,9 +226,9 @@ assert resource_isdir(pkgname, '__init__.py') is False
 # NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
 # will raise exception in a future release
 ret = resource_isdir(pkgname, '..')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is False)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and not ret)
 
 # Parent of subpacakge's directory
 #  * DefaultProvider returns True
@@ -237,27 +237,27 @@ assert (is_default and ret is True) or \
 # NOTE: using .. in path is deprecated (since setuptools 40.8.0) and
 # will raise exception in a future release
 ret = resource_isdir(pkgname + '.subpkg1', '..')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is False)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and not ret)
 
 # Submodule in main package
 ret = resource_isdir(pkgname + '.a', '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Submodule in main package, with empty path
-assert resource_isdir(pkgname + '.a', '') is True
+assert resource_isdir(pkgname + '.a', '')
 
 # Submodule in subpackage
 ret = resource_isdir(pkgname + '.subpkg1.c', '.')
-assert (is_default and ret is True) or \
-       (is_zip and ret is False) or \
-       (is_frozen and ret is True)
+assert (is_default and ret) or \
+       (is_zip and not ret) or \
+       (is_frozen and ret)
 
 # Submodule in subpackage, with empty path
-assert resource_isdir(pkgname + '.subpkg1.c', '') is True
+assert resource_isdir(pkgname + '.subpkg1.c', '')
 
 
 ########################################################################

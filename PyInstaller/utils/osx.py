@@ -16,6 +16,7 @@ Utils for Mac OS X platform.
 
 import os
 import shutil
+import pathlib
 
 from ..compat import base_prefix
 from macholib.MachO import MachO
@@ -106,3 +107,20 @@ def fix_exe_for_code_signing(filename):
     ## Write changes back.
     with open(exe_data.filename, 'rb+') as fp:
         exe_data.write(fp)
+
+
+def get_osx_dylib_framework_path(libpath):
+    """
+    Checks if the given dynamic library belongs to a framework bundle,
+    by checking the parent components of the path.
+
+    :return: path component corresponding to the framework bundle's
+    top-level directory if the library belongs to one, None otherwise.
+    """
+    libpath = pathlib.PurePath(libpath)
+    framework_name = str(libpath.name) + ".framework"  # Derive framework name
+    # Check all parents
+    for parent in libpath.parents:
+        if parent.name == framework_name:
+            return str(parent)
+    return None

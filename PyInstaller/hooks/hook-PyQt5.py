@@ -12,6 +12,7 @@ import os
 
 from PyInstaller.utils.hooks import collect_system_data_files
 from PyInstaller.utils.hooks.qt import pyqt5_library_info, get_qt_binaries
+from PyInstaller.compat import is_darwin
 
 # Ensure PyQt5 is importable before adding info depending on it.
 if pyqt5_library_info.version:
@@ -30,3 +31,8 @@ if pyqt5_library_info.version:
 
     # Collect required Qt binaries.
     binaries = get_qt_binaries(pyqt5_library_info)
+
+    # Register macOS framework bundle relocation
+    if is_darwin:
+        from PyInstaller.utils.hooks import osx_register_framework_relocation
+        osx_register_framework_relocation('Qt*.framework', 'PyQt5/Qt/lib')

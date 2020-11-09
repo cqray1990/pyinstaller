@@ -12,7 +12,7 @@
 import os
 from PyInstaller.utils.hooks import collect_system_data_files
 from PyInstaller.utils.hooks.qt import pyside2_library_info, get_qt_binaries
-from PyInstaller.compat import is_win
+from PyInstaller.compat import is_win, is_darwin
 
 # Only proceed if PySide2 can be imported.
 if pyside2_library_info.version:
@@ -32,3 +32,8 @@ if pyside2_library_info.version:
 
     # Collect required Qt binaries.
     binaries = get_qt_binaries(pyside2_library_info)
+
+    # Register macOS framework bundle relocation
+    if is_darwin:
+        from PyInstaller.utils.hooks import osx_register_framework_relocation
+        osx_register_framework_relocation('Qt*.framework', 'PySide2/Qt/lib')

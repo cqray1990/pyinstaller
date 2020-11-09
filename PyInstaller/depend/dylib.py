@@ -284,7 +284,8 @@ def mac_set_relative_dylib_deps(libname, distname):
 
     from macholib import util
     from macholib.MachO import MachO
-    from PyInstaller.utils.osx import get_osx_dylib_framework_path
+    from PyInstaller.utils.osx import get_osx_dylib_framework_path, \
+                                      get_osx_framework_relocation_path
 
     # Ignore bootloader otherwise PyInstaller fails with exception like
     # 'ValueError: total_size > low_offset (288 > 0)'
@@ -322,16 +323,20 @@ def mac_set_relative_dylib_deps(libname, distname):
         if any([x in pth for x in _exemptions]):
             return None
 
-        # Check if the given dynamic library is a part of a framework bundle
+        # Check if the given dynamic library is a part of a framework bundle.
+        # If it is, assume that the bundle will be reconstructed (and
+        # optionally relocated from _MEIPASS dir), and adjust the library
+        # path accordingly...
         fwk_pth = get_osx_dylib_framework_path(pth)
         if fwk_pth is not None:
             fwk_name = os.path.basename(fwk_pth)  # framework name
-            fwk_lib_pth = os.path.relpath(pth, fwk_pth)  # framework-relative path
-
+            fwk_lib_pth = os.path.relpath(pth, fwk_pth)  # bundle-relative path
+            fwk_reloc_pth = get_osx_framework_relocation_path(fwk_name)
             # Use relative path to dependent dynamic libraries, located
             # within the .framework that is placed at the location of
             # the executable
-            return os.path.join('@loader_path', parent_dir, fwk_name, fwk_lib_pth)
+            return os.path.join('@loader_path', parent_dir, fwk_reloc_pth,
+                                fwk_name, fwk_lib_pth)
 
         # Use relative path to dependent dynamic libraries based on the
         # location of the executable.

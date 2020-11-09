@@ -17,6 +17,7 @@ Utils for Mac OS X platform.
 import os
 import shutil
 import pathlib
+import fnmatch
 
 from ..compat import base_prefix
 from macholib.MachO import MachO
@@ -124,3 +125,29 @@ def get_osx_dylib_framework_path(libpath):
         if parent.name == framework_name:
             return str(parent)
     return None
+
+
+_registered_fwk_relocations = {}
+
+def osx_register_framework_relocation(fwk_name, path):
+    """
+    Register a framework bundle relocation for given framework name and
+    a _MEIPASS dir relative path. During the lookup, fnmatch() function
+    is used, so the name may contain * and/or ? to cover a range of
+    framework names. If multiple relocations with overlapping names
+    are defined, the order of resolution is undefined.
+    """
+    _registered_fwk_relocations[fwk_name] = path
+
+
+def get_osx_framework_relocation_path(fwk_name):
+    """
+    Retrieve optional relocation path for the given framework name.
+
+    :return: relative path to _MEIPASS dir where the framework bundle
+    directory should be relocated if available, empty string otherwise.
+    """
+    for reloc_name, reloc_path in _registered_fwk_relocations.items():
+        if fnmatch.fnmatch(fwk_name, reloc_name):
+            return reloc_path
+    return ''

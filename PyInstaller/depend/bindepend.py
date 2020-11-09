@@ -971,7 +971,8 @@ def collectFrameworkBundles(binaries):
     """
 
     from ..building.datastruct import Tree
-    from PyInstaller.utils.osx import get_osx_dylib_framework_path
+    from PyInstaller.utils.osx import get_osx_dylib_framework_path, \
+                                      get_osx_framework_relocation_path
 
     ret_datas = []
     ret_binaries = []
@@ -993,9 +994,13 @@ def collectFrameworkBundles(binaries):
 
         # There is a framework to collect...
         fwk_name = os.path.basename(fwk_path)  # framework name
-        fwk_lib_pth = os.path.relpath(path, fwk_path)  # framework-relative path
+        fwk_lib_path = os.path.relpath(path, fwk_path)  # framework-relative path
+        fwk_reloc_path = os.path.join(
+            get_osx_framework_relocation_path(fwk_name),
+            fwk_name)  # full framework-bundle relocation path
         # Adjust binary path
-        ret_binaries.append((os.path.join(fwk_name, fwk_lib_pth), path, bintype))
+        ret_binaries.append((os.path.join(fwk_reloc_path, fwk_lib_path),
+                            path, bintype))
         # Collect data from other directories (e.g., Resources)
         if fwk_name not in seen_frameworks:
             _EXTRA_DIRS = (
@@ -1005,7 +1010,7 @@ def collectFrameworkBundles(binaries):
             for extra_dir, extra_dir_type in _EXTRA_DIRS:
                 src_path = os.path.join(fwk_path, extra_dir)
                 if os.path.exists(src_path):
-                    dst_path = os.path.join(fwk_name, extra_dir)
+                    dst_path = os.path.join(fwk_reloc_path, extra_dir)
                     ret_datas += Tree(src_path, prefix=dst_path, typecode=extra_dir_type)
             seen_frameworks.add(fwk_name)
 

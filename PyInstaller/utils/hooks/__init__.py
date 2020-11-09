@@ -1069,3 +1069,9 @@ from .django import *
 from .gi import *
 from .qt import *
 from .win32 import *
+
+
+# MacOS-specific helper for registering framework bundle relocation.
+if is_darwin:
+    from ...utils.osx import osx_register_framework_relocation \
+        as osx_register_framework_relocation  # create an alias

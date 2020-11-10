@@ -24,14 +24,7 @@
 
 #ifdef _WIN32
     #include <windows.h>
-    #include <winsock.h>  /* ntohl */
 #else
-    #ifdef __FreeBSD__
-/* freebsd issue #188316 */
-        #include <arpa/inet.h>  /* ntohl */
-    #else
-        #include <netinet/in.h>  /* ntohl */
-    #endif
     #include <langinfo.h> /* CODESET, nl_langinfo */
     #include <stdlib.h>   /* malloc */
 #endif
@@ -404,7 +397,7 @@ pyi_launch_run_scripts(ARCHIVE_STATUS *status)
             Py_DECREF(__file__);
 
             /* Unmarshall code object */
-            code = PI_PyMarshal_ReadObjectFromString((const char *) data, ntohl(ptoc->ulen));
+            code = PI_PyMarshal_ReadObjectFromString((const char *) data, ptoc->ulen);
 
             if (!code) {
                 FATALERROR("Failed to unmarshal code object for %s\n", ptoc->name);
@@ -419,7 +412,7 @@ pyi_launch_run_scripts(ARCHIVE_STATUS *status)
              * object, the Python object returned is always None.) */
             if (!retval) {
                 /* If the error was SystemExit, PyErr_Print calls exit() without
-                 * returning. This means we won't print "Failed to execute" on 
+                 * returning. This means we won't print "Failed to execute" on
                  * normal SystemExit's.
                  */
                 PI_PyErr_Print();

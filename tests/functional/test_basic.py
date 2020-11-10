@@ -613,6 +613,13 @@ def test_large_data_file(pyi_builder, tmpdir, file_size):
             file_hash.update(chunk)
             chunk = fp.read(8192)
 
+    # Prepare data file argument for pyinstaller; Windows uses different
+    # separator character (semi-colon instead of colon)
+    if is_win:
+        data_file_arg = '{0};.'.format(data_file)
+    else:
+        data_file_arg = '{0}:.'.format(data_file)
+    # Run the program
     pyi_builder.test_source(
         """
         import sys
@@ -630,7 +637,7 @@ def test_large_data_file(pyi_builder, tmpdir, file_size):
         assert file_hash.hexdigest() == '{0}'
         """.format(file_hash.hexdigest()),
         pyi_args=[
-            '--add-data', '{0}:.'.format(data_file),
+            '--add-data', data_file_arg,
             '--debug', 'bootloader'
         ]
     )

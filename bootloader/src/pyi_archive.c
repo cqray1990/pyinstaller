@@ -20,14 +20,7 @@
 
 #ifdef _WIN32
 /* TODO verify windows includes */
-    #include <winsock.h>  /* ntohl */
 #else
-    #ifdef __FreeBSD__
-/* freebsd issue #188316 */
-        #include <arpa/inet.h>  /* ntohl */
-    #else
-        #include <netinet/in.h>  /* ntohl */
-    #endif
     #include <stdlib.h>   /* malloc */
     #include <string.h>   /* strncmp, strcpy, strcat */
     #include <sys/stat.h> /* fchmod */
@@ -42,6 +35,7 @@
 #include "pyi_archive.h"
 #include "pyi_utils.h"
 #include "pyi_python.h"
+#include "pyi_endian.h"
 
 int pyvers = 0;
 
@@ -269,10 +263,10 @@ pyi_arch_find_cookie(ARCHIVE_STATUS *status, unsigned int search_end)
             memcpy(&status->cookie, search_ptr, sizeof(COOKIE));
 
             /* Fix endianess of COOKIE fields */
-            status->cookie.len = ntohl(status->cookie.len);
-            status->cookie.TOC = ntohl(status->cookie.TOC);
-            status->cookie.TOClen = ntohl(status->cookie.TOClen);
-            status->cookie.pyvers = ntohl(status->cookie.pyvers);
+            status->cookie.len = pyi_be32toh(status->cookie.len);
+            status->cookie.TOC = pyi_be32toh(status->cookie.TOC);
+            status->cookie.TOClen = pyi_be32toh(status->cookie.TOClen);
+            status->cookie.pyvers = pyi_be32toh(status->cookie.pyvers);
 
             /* From the cookie, calculate the archive start */
             status->pkgstart = search_start + sizeof(COOKIE) + (search_ptr - buf) - status->cookie.len;
@@ -392,10 +386,10 @@ _pyi_arch_fix_toc_endianess(ARCHIVE_STATUS *status)
     TOC *ptoc = status->tocbuff;
     while (ptoc < status->tocend) {
         /* Fixup the current entry */
-        ptoc->structlen = ntohl(ptoc->structlen);
-        ptoc->pos = ntohl(ptoc->pos);
-        ptoc->len = ntohl(ptoc->len);
-        ptoc->ulen = ntohl(ptoc->ulen);
+        ptoc->structlen = pyi_be32toh(ptoc->structlen);
+        ptoc->pos = pyi_be32toh(ptoc->pos);
+        ptoc->len = pyi_be32toh(ptoc->len);
+        ptoc->ulen = pyi_be32toh(ptoc->ulen);
         /* Jump to next entry; with the current entry fixed up, we can
          * use pyi_arch_increment_toc_ptr() */
         ptoc = pyi_arch_increment_toc_ptr(status, ptoc);

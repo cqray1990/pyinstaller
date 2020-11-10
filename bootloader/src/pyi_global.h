@@ -167,6 +167,8 @@ void mbvs(const char *fmt, ...);
     #define stat             _stat
     #define strdup           _strdup
     #define vsnprintf        _vsnprintf
+    #define fseeko           _fseeki64
+    #define ftello           _ftelli64
 /*
  * Mingw on Windows contains the following functions.
  * Redefine them only if they are not available.

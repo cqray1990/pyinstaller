@@ -153,7 +153,7 @@ pyi_arch_extract(ARCHIVE_STATUS *status, TOC *ptoc)
         return NULL;
     }
 
-    fseek(status->fp, status->pkgstart + ntohl(ptoc->pos), SEEK_SET);
+    fseeko(status->fp, status->pkgstart + ntohl(ptoc->pos), SEEK_SET);
     data = (unsigned char *)malloc(ntohl(ptoc->len));
 
     if (data == NULL) {
@@ -252,7 +252,7 @@ pyi_arch_find_cookie(ARCHIVE_STATUS *status, unsigned int search_end)
     char buf[SEARCH_SIZE];
     char * search_ptr = buf + SEARCH_SIZE - sizeof(COOKIE);
 
-    if (fseek(status->fp, search_start, SEEK_SET)) {
+    if (fseeko(status->fp, search_start, SEEK_SET)) {
         return -1;
     }
 
@@ -286,17 +286,17 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
     /* There might be a digital signature attached. Let's see. */
     char buf[2];
     unsigned int offset = 0, signature_offset = 0;
-    fseek(status->fp, 0, SEEK_SET);
+    fseeko(status->fp, 0, SEEK_SET);
     fread(buf, 1, 2, status->fp);
 
     if (!(buf[0] == 'M' && buf[1] == 'Z')) {
         return -1;
     }
     /* Skip MSDOS header */
-    fseek(status->fp, 60, SEEK_SET);
+    fseeko(status->fp, 60, SEEK_SET);
     /* Read offset to PE header */
     fread(&offset, 4, 1, status->fp);
-    fseek(status->fp, offset + 24, SEEK_SET);
+    fseeko(status->fp, offset + 24, SEEK_SET);
     fread(buf, 2, 1, status->fp);
 
     if (buf[0] == 0x0b && buf[1] == 0x01) {
@@ -315,7 +315,7 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
     }
 
     /* Jump to the fields that contain digital signature info */
-    fseek(status->fp, offset + signature_offset, SEEK_SET);
+    fseeko(status->fp, offset + signature_offset, SEEK_SET);
     fread(&offset, 4, 1, status->fp);
 
     if (offset == 0) {
@@ -340,7 +340,7 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
     uint32_t offset = -1;
 
     /* The first 4 bytes determine the header length */
-    fseek(status->fp, 0, SEEK_SET);
+    fseeko(status->fp, 0, SEEK_SET);
     fread(&magic_value, sizeof(uint32_t), 1, status->fp);
 
     if (magic_value == 0xfeedface || magic_value == 0xcefaedfe) {
@@ -353,12 +353,12 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
     }
 
     /* Determine the total size of all load commands */
-    fseek(status->fp, 20, SEEK_SET);
+    fseeko(status->fp, 20, SEEK_SET);
     fread(&load_size, sizeof(uint32_t), 1, status->fp);
 
-    fseek(status->fp, header_size, SEEK_SET);
+    fseeko(status->fp, header_size, SEEK_SET);
 
-    while (ftell(status->fp) < (header_size + load_size)) {
+    while (ftello(status->fp) < (header_size + load_size)) {
         fread(&cmd, sizeof(uint32_t), 1, status->fp);
         fread(&cmd_size, sizeof(uint32_t), 1, status->fp);
 
@@ -369,7 +369,7 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
             VS("LOADER: %s contains a digital signature\n", status->archivename);
             break;
         }
-        fseek(status->fp, cmd_size - 8, SEEK_CUR);
+        fseeko(status->fp, cmd_size - 8, SEEK_CUR);
     }
     return offset;
 #else /* ifdef _WIN32 */
@@ -404,8 +404,8 @@ pyi_arch_open(ARCHIVE_STATUS *status)
      * at end of file.
      */
     if (search_end == -1) {
-        fseek(status->fp, 0, SEEK_END);
-        search_end = ftell(status->fp);
+        fseeko(status->fp, 0, SEEK_END);
+        search_end = ftello(status->fp);
     }
 
     /* Load status->cookie */
@@ -421,7 +421,7 @@ pyi_arch_open(ARCHIVE_STATUS *status)
     pyvers = pyi_arch_get_pyversion(status);
 
     /* Read in in the table of contents */
-    fseek(status->fp, status->pkgstart + ntohl(status->cookie.TOC), SEEK_SET);
+    fseeko(status->fp, status->pkgstart + ntohl(status->cookie.TOC), SEEK_SET);
     status->tocbuff = (TOC *) malloc(ntohl(status->cookie.TOClen));
 
     if (status->tocbuff == NULL) {

@@ -584,3 +584,51 @@ def test_several_scripts2(pyi_builder_spec):
     Verify each script has it's own global vars (basic test).
     """
     pyi_builder_spec.test_spec('several-scripts2.spec')
+
+
+@pytest.mark.parametrize('file_size', [
+    100,  # 100 MiB: sanity check
+])
+def test_large_data_file(pyi_builder, tmpdir, file_size):
+    """
+    Verify that large data files are correctly packged/unpacked in
+    onefile builds.
+    """
+    import hashlib
+
+    # The test is relevant only for onefile builds
+    if pyi_builder._mode != 'onefile':
+        pytest.skip('The test is relevant only for onefile builds.')
+
+    # Create data file
+    data_file = tmpdir.join('data.dat')
+    with open(data_file, 'wb') as fp:
+        fp.write(os.urandom(file_size*1024*1024))  # file_size is in MiB
+    # Compute hash
+    with open(data_file, "rb") as fp:
+        file_hash = hashlib.md5()
+        chunk = fp.read(8192)
+        while chunk:
+            file_hash.update(chunk)
+            chunk = fp.read(8192)
+
+    pyi_builder.test_source(
+        """
+        import sys
+        import os
+        import hashlib
+
+        data_file = os.path.join(sys._MEIPASS, 'data.dat')
+        with open(data_file, "rb") as fp:
+            file_hash = hashlib.md5()
+            chunk = fp.read(8192)
+            while chunk:
+                file_hash.update(chunk)
+                chunk = fp.read(8192)
+
+        assert file_hash.hexdigest() == '{0}'
+        """.format(file_hash.hexdigest()),
+        pyi_args=[
+            '--add-data', '{0}:.'.format(data_file)
+        ]
+    )

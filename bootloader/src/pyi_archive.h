@@ -34,33 +34,33 @@
 
 /* TOC entry for a CArchive */
 typedef struct _toc {
-    int  structlen;  /*len of this one - including full len of name */
-    int  pos;        /* pos rel to start of concatenation */
-    int  len;        /* len of the data (compressed) */
-    int  ulen;       /* len of data (uncompressed) */
-    char cflag;      /* is it compressed (really a byte) */
-    char typcd;      /* type code -'b' binary, 'z' zlib, 'm' module,
-                      * 's' script (v3),'x' data, 'o' runtime option  */
-    char name[1];    /* the name to save it as */
+    int          structlen; /*len of this one - including full len of name */
+    unsigned int pos;       /* pos rel to start of concatenation */
+    unsigned int len;       /* len of the data (compressed) */
+    unsigned int ulen;      /* len of data (uncompressed) */
+    char         cflag;     /* is it compressed (really a byte) */
+    char         typcd;     /* type code -'b' binary, 'z' zlib, 'm' module,
+                             * 's' script (v3),'x' data, 'o' runtime option  */
+    char         name[1];   /* the name to save it as */
     /* starting in v5, we stretch this out to a mult of 16 */
 } TOC;
 
 /* The CArchive Cookie, from end of the archive. */
 typedef struct _cookie {
-    char magic[8];      /* 'MEI\014\013\012\013\016' */
-    int  len;           /* len of entire package */
-    int  TOC;           /* pos (rel to start) of TableOfContents */
-    int  TOClen;        /* length of TableOfContents */
-    int  pyvers;        /* new in v4 */
-    char pylibname[64]; /* Filename of Python dynamic library e.g. python2.7.dll. */
+    char          magic[8];      /* 'MEI\014\013\012\013\016' */
+    unsigned int  len;           /* len of entire package */
+    unsigned int  TOC;           /* pos (rel to start) of TableOfContents */
+    int           TOClen;        /* length of TableOfContents */
+    int           pyvers;        /* new in v4 */
+    char          pylibname[64]; /* Filename of Python dynamic library e.g. python2.7.dll. */
 } COOKIE;
 
 typedef struct _archive_status {
-    FILE * fp;
-    int    pkgstart;
-    TOC *  tocbuff;
-    TOC *  tocend;
-    COOKIE cookie;
+    FILE *       fp;
+    unsigned int pkgstart;
+    TOC *        tocbuff;
+    TOC *        tocend;
+    COOKIE       cookie;
     /*
      * On Windows:
      *    These strings are UTF-8 encoded (via pyi_win32_utils_to_utf8). On Python 2,

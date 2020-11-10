@@ -622,7 +622,7 @@ int
 pyi_pylib_install_zlib(ARCHIVE_STATUS *status, TOC *ptoc)
 {
     int rc = 0;
-    int zlibpos = status->pkgstart + ntohl(ptoc->pos);
+    unsigned int zlibpos = status->pkgstart + ntohl(ptoc->pos);
     PyObject * sys_path, *zlib_entry, *archivename_obj;
 
     /* Note that sys.path contains PyUnicode on py3. Ensure
@@ -640,7 +640,7 @@ pyi_pylib_install_zlib(ARCHIVE_STATUS *status, TOC *ptoc)
      */
     archivename_obj = PI_PyUnicode_DecodeFSDefault(status->archivename);
 #endif
-    zlib_entry = PI_PyUnicode_FromFormat("%U?%d", archivename_obj, zlibpos);
+    zlib_entry = PI_PyUnicode_FromFormat("%U?%u", archivename_obj, zlibpos);
     PI_Py_DecRef(archivename_obj);
 
     sys_path = PI_PySys_GetObject("path");

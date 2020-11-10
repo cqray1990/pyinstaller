@@ -246,9 +246,9 @@ pyi_arch_extract2fs(ARCHIVE_STATUS *status, TOC *ptoc)
 #endif
 
 static int
-pyi_arch_find_cookie(ARCHIVE_STATUS *status, int search_end)
+pyi_arch_find_cookie(ARCHIVE_STATUS *status, unsigned int search_end)
 {
-    int search_start = search_end - SEARCH_SIZE;
+    unsigned int search_start = search_end - SEARCH_SIZE;
     char buf[SEARCH_SIZE];
     char * search_ptr = buf + SEARCH_SIZE - sizeof(COOKIE);
 
@@ -279,13 +279,13 @@ pyi_arch_find_cookie(ARCHIVE_STATUS *status, int search_end)
     return -1;
 }
 
-static int
+static unsigned int
 findDigitalSignature(ARCHIVE_STATUS * const status)
 {
 #ifdef _WIN32
     /* There might be a digital signature attached. Let's see. */
     char buf[2];
-    int offset = 0, signature_offset = 0;
+    unsigned int offset = 0, signature_offset = 0;
     fseek(status->fp, 0, SEEK_SET);
     fread(buf, 1, 2, status->fp);
 
@@ -384,7 +384,7 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
 int
 pyi_arch_open(ARCHIVE_STATUS *status)
 {
-    int search_end = 0;
+    unsigned int search_end = -1;
     VS("LOADER: archivename is %s\n", status->archivename);
 
     /* Physically open the file */
@@ -403,7 +403,7 @@ pyi_arch_open(ARCHIVE_STATUS *status)
     /* Signature not found or not applicable for this platform. Stop searching
      * at end of file.
      */
-    if (search_end < 1) {
+    if (search_end == -1) {
         fseek(status->fp, 0, SEEK_END);
         search_end = ftell(status->fp);
     }

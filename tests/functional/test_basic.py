@@ -587,7 +587,8 @@ def test_several_scripts2(pyi_builder_spec):
 
 
 @pytest.mark.parametrize('file_size', [
-    100,  # 100 MiB: sanity check
+       100,  # 100 MiB: sanity check
+    3*1024,  # 3 GiB
 ])
 def test_large_data_file(pyi_builder, tmpdir, file_size):
     """
@@ -629,6 +630,7 @@ def test_large_data_file(pyi_builder, tmpdir, file_size):
         assert file_hash.hexdigest() == '{0}'
         """.format(file_hash.hexdigest()),
         pyi_args=[
-            '--add-data', '{0}:.'.format(data_file)
+            '--add-data', '{0}:.'.format(data_file),
+            '--debug', 'bootloader'
         ]
     )

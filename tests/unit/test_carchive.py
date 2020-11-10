@@ -18,7 +18,9 @@ import pytest
 
 
 @pytest.mark.parametrize("num_files,file_size", [
-    (5, 100),  # 5x100 MiB
+    (5,    100),  # 5x100 MiB: sanity check
+    (3,   1024),  # 3x1 GiB
+    (1, 3*1024),  # 1x3 GiB
 ])
 def test_carchive_large_files(tmpdir, num_files, file_size):
     archive_file = tmpdir.join('archive.dat')

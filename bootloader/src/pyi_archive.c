@@ -472,11 +472,7 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
 
     uint32_t magic_value;
     uint32_t header_size;
-
     uint32_t load_size;
-    uint32_t cmd;
-    uint32_t cmd_size;
-    uint32_t offset = -1;
 
     /* The first 4 bytes determine the header length */
     fseeko(status->fp, 0, SEEK_SET);
@@ -498,19 +494,23 @@ findDigitalSignature(ARCHIVE_STATUS * const status)
     fseeko(status->fp, header_size, SEEK_SET);
 
     while (ftello(status->fp) < (header_size + load_size)) {
+        uint32_t cmd;
+        uint32_t cmd_size;
+
         fread(&cmd, sizeof(uint32_t), 1, status->fp);
         fread(&cmd_size, sizeof(uint32_t), 1, status->fp);
 
         if (cmd == 29) {
             /* Code signatures are command 29.
              *  Our archive ends right before the signature */
+            uint32_t offset;
             fread(&offset, sizeof(uint32_t), 1, status->fp);
             VS("LOADER: %s contains a digital signature\n", status->archivename);
-            break;
+            return offset;
         }
         fseeko(status->fp, cmd_size - 8, SEEK_CUR);
     }
-    return offset;
+    return -1;  /* No signature found */
 #else /* ifdef _WIN32 */
     return -1;
 #endif /* ifdef _WIN32 */

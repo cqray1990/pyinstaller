@@ -21,6 +21,8 @@ import pytest
     (5,    100),  # 5x100 MiB: sanity check
     (3,   1024),  # 3x1 GiB
     (1, 3*1024),  # 1x3 GiB
+    (5,   1024),  # 5x1 GiB
+    (1, 5*1024),  # 1x5 GiB
 ])
 def test_carchive_large_files(tmpdir, num_files, file_size):
     archive_file = tmpdir.join('archive.dat')

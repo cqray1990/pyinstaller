@@ -101,7 +101,7 @@ _pyi_arch_extract_compressed(ARCHIVE_STATUS *status, TOC *ptoc, FILE *out_fp, un
     z_stream zstream;
     unsigned char *buffer_in = NULL;
     unsigned char *buffer_out = NULL;
-    size_t remaining_size;
+    int64_t remaining_size;
     int rc = -1;
 
     /* Allocate and initialize inflate state */
@@ -197,7 +197,7 @@ static int
 _pyi_arch_extract2fs_uncompressed(ARCHIVE_STATUS *status, TOC *ptoc, FILE *out)
 {
     unsigned char *buffer;
-    size_t remaining_size;
+    int64_t remaining_size;
     int rc = 0;
 
     /* Allocate temporary buffer for a single chunk */
@@ -235,7 +235,7 @@ static int
 _pyi_arch_extract_uncompressed(ARCHIVE_STATUS *status, TOC *ptoc, unsigned char *out)
 {
     unsigned char *buffer;
-    size_t remaining_size;
+    int64_t remaining_size;
 
     /* We could (probably?) read everything in one go with one (potentially)
      * huge fread(). Except in cases when the file size exceeds the capacity
@@ -379,9 +379,9 @@ cleanup:
 #endif
 
 static int
-pyi_arch_find_cookie(ARCHIVE_STATUS *status, unsigned int search_end)
+pyi_arch_find_cookie(ARCHIVE_STATUS *status, int64_t search_end)
 {
-    unsigned int search_start = search_end - SEARCH_SIZE;
+    int64_t search_start = search_end - SEARCH_SIZE;
     char buf[SEARCH_SIZE];
     char * search_ptr = buf + SEARCH_SIZE - sizeof(COOKIE);
 
@@ -402,8 +402,8 @@ pyi_arch_find_cookie(ARCHIVE_STATUS *status, unsigned int search_end)
             memcpy(&status->cookie, search_ptr, sizeof(COOKIE));
 
             /* Fix endianess of COOKIE fields */
-            status->cookie.len = pyi_be32toh(status->cookie.len);
-            status->cookie.TOC = pyi_be32toh(status->cookie.TOC);
+            status->cookie.len = pyi_be64toh(status->cookie.len);
+            status->cookie.TOC = pyi_be64toh(status->cookie.TOC);
             status->cookie.TOClen = pyi_be32toh(status->cookie.TOClen);
             status->cookie.pyvers = pyi_be32toh(status->cookie.pyvers);
 
@@ -418,13 +418,13 @@ pyi_arch_find_cookie(ARCHIVE_STATUS *status, unsigned int search_end)
     return -1;
 }
 
-static unsigned int
+static int64_t
 findDigitalSignature(ARCHIVE_STATUS * const status)
 {
 #ifdef _WIN32
     /* There might be a digital signature attached. Let's see. */
     char buf[2];
-    unsigned int offset = 0, signature_offset = 0;
+    int64_t offset = 0, signature_offset = 0;
     fseeko(status->fp, 0, SEEK_SET);
     fread(buf, 1, 2, status->fp);
 
@@ -526,11 +526,12 @@ _pyi_arch_fix_toc_endianess(ARCHIVE_STATUS *status)
     while (ptoc < status->tocend) {
         /* Fixup the current entry */
         ptoc->structlen = pyi_be32toh(ptoc->structlen);
-        ptoc->pos = pyi_be32toh(ptoc->pos);
-        ptoc->len = pyi_be32toh(ptoc->len);
-        ptoc->ulen = pyi_be32toh(ptoc->ulen);
+        ptoc->pos = pyi_be64toh(ptoc->pos);
+        ptoc->len = pyi_be64toh(ptoc->len);
+        ptoc->ulen = pyi_be64toh(ptoc->ulen);
         /* Jump to next entry; with the current entry fixed up, we can
-         * use pyi_arch_increment_toc_ptr() */
+         * use pyi_arch_increment_toc_ptr()
+         */
         ptoc = pyi_arch_increment_toc_ptr(status, ptoc);
     }
 }
@@ -542,7 +543,7 @@ _pyi_arch_fix_toc_endianess(ARCHIVE_STATUS *status)
 int
 pyi_arch_open(ARCHIVE_STATUS *status)
 {
-    unsigned int search_end = -1;
+    int64_t search_end = 0;
     VS("LOADER: archivename is %s\n", status->archivename);
 
     /* Physically open the file */
@@ -561,7 +562,7 @@ pyi_arch_open(ARCHIVE_STATUS *status)
     /* Signature not found or not applicable for this platform. Stop searching
      * at end of file.
      */
-    if (search_end == -1) {
+    if (search_end < 1) {
         fseeko(status->fp, 0, SEEK_END);
         search_end = ftello(status->fp);
     }

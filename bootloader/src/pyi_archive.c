@@ -54,7 +54,7 @@ pyi_arch_increment_toc_ptr(const ARCHIVE_STATUS *status, const TOC* ptoc)
     TOC *result = (TOC*)((char *)ptoc + ptoc->structlen);
 
     if (result < status->tocbuff) {
-        FATALERROR("Cannot read Table of Contents.\n");
+        FATALERROR("LOADER: Cannot read Table of Contents!\n");
         return status->tocend;
     }
     return result;
@@ -112,19 +112,19 @@ _pyi_arch_extract_compressed(ARCHIVE_STATUS *status, TOC *ptoc, FILE *out_fp, un
     zstream.next_in = Z_NULL;
     rc = inflateInit(&zstream);
     if (rc != Z_OK) {
-        FATALERROR("Failed to extract %s: inflateInit() failed with return code %d!\n", ptoc->name, rc);
+        FATALERROR("LOADER: Failed to extract %s: inflateInit() failed with return code %d!\n", ptoc->name, rc);
         return -1;
     }
 
     /* Allocate I/O buffers */
     buffer_in = (unsigned char *)malloc(CHUNK_SIZE);
     if (buffer_in == NULL) {
-        FATAL_PERROR("malloc", "Failed to extract %s: failed to allocate temporary input buffer!\n", ptoc->name);
+        FATAL_PERROR("malloc", "LOADER: Failed to extract %s: failed to allocate temporary input buffer! ", ptoc->name);
         goto cleanup;
     }
     buffer_out = (unsigned char *)malloc(CHUNK_SIZE);
     if (buffer_out == NULL) {
-        FATAL_PERROR("malloc", "Failed to extract %s: failed to allocate temporary output buffer!\n", ptoc->name);
+        FATAL_PERROR("malloc", "LOADER: Failed to extract %s: failed to allocate temporary output buffer! ", ptoc->name);
         goto cleanup;
     }
 
@@ -177,7 +177,7 @@ decompress_end:
     if (rc == Z_STREAM_END) {
         rc = 0; /* Success */
     } else {
-        FATALERROR("Failed to extract %s: decompression resulted in return code %d!\n", ptoc->name, rc);
+        FATALERROR("LOADER: Failed to extract %s: decompression resulted in return code %d!\n", ptoc->name, rc);
         rc = -1;
     }
 
@@ -203,7 +203,7 @@ _pyi_arch_extract2fs_uncompressed(ARCHIVE_STATUS *status, TOC *ptoc, FILE *out)
     /* Allocate temporary buffer for a single chunk */
     buffer = (unsigned char *)malloc(CHUNK_SIZE);
     if (buffer == NULL) {
-        FATAL_PERROR("malloc", "Failed to extract %s: failed to allocate temporary buffer!\n", ptoc->name);
+        FATAL_PERROR("malloc", "LOADER: Failed to extract %s: failed to allocate temporary buffer! ", ptoc->name);
         return -1;
     }
 
@@ -212,12 +212,12 @@ _pyi_arch_extract2fs_uncompressed(ARCHIVE_STATUS *status, TOC *ptoc, FILE *out)
     while (remaining_size > 0) {
         size_t chunk_size = (CHUNK_SIZE < remaining_size) ? CHUNK_SIZE : remaining_size;
         if (fread(buffer, chunk_size, 1, status->fp) < 1) {
-            FATAL_PERROR("fread", "Failed to extract %s: failed to read data chunk!\n", ptoc->name);
+            FATAL_PERROR("fread", "LOADER: Failed to extract %s: failed to read data chunk! ", ptoc->name);
             rc = -1;
             break;
         }
         if (fwrite(buffer, chunk_size, 1, out) < 1) {
-            FATAL_PERROR("fwrite", "Failed to extract %s: failed to write data chunk!\n", ptoc->name);
+            FATAL_PERROR("fwrite", "LOADER: Failed to extract %s: failed to write data chunk! ", ptoc->name);
             rc = -1;
             break;
         }
@@ -250,7 +250,7 @@ _pyi_arch_extract_uncompressed(ARCHIVE_STATUS *status, TOC *ptoc, unsigned char 
     while (remaining_size > 0) {
         size_t chunk_size = (CHUNK_SIZE < remaining_size) ? CHUNK_SIZE : remaining_size;
         if (fread(buffer, chunk_size, 1, status->fp) < 1) {
-            FATAL_PERROR("fread", "Failed to extract %s: failed to read data chunk!\n", ptoc->name);
+            FATAL_PERROR("fread", "LOADER: Failed to extract %s: failed to read data chunk! ", ptoc->name);
             return -1;
         }
         remaining_size -= chunk_size;
@@ -271,19 +271,19 @@ pyi_arch_extract(ARCHIVE_STATUS *status, TOC *ptoc)
 
     /* Open archive (source) file... */
     if (pyi_arch_open_fp(status) != 0) {
-        FATALERROR("Failed to extract %s: failed to open archive file!\n", ptoc->name);
+        FATALERROR("LOADER: Failed to extract %s: failed to open archive file!\n", ptoc->name);
         return NULL;
     }
     /* ... and seek to the beginning of entry's data */
     if (fseeko(status->fp, status->pkgstart + ptoc->pos, SEEK_SET) < 0) {
-        FATAL_PERROR("fseeko", "Failed to extract %s: failed to seek to the entry's data!\n", ptoc->name);
+        FATAL_PERROR("fseeko", "LOADER: Failed to extract %s: failed to seek to the entry's data! ", ptoc->name);
         return NULL;
     }
 
     /* Allocate the data buffer */
     data = (unsigned char *)malloc(ptoc->ulen);
     if (data == NULL) {
-        FATAL_PERROR("malloc", "Failed to extract %s: failed to allocate data buffer (%u bytes)!\n", ptoc->name, ptoc->ulen);
+        FATAL_PERROR("malloc", "LOADER: Failed to extract %s: failed to allocate data buffer (%u bytes)! ", ptoc->name, ptoc->ulen);
         goto cleanup;
     }
 
@@ -321,19 +321,19 @@ pyi_arch_extract2fs(ARCHIVE_STATUS *status, TOC *ptoc)
     /* ... and open target file */
     out = pyi_open_target(status->temppath, ptoc->name);
     if (out == NULL) {
-        FATAL_PERROR("fopen", "Failed to extract %s: failed to open target file!\n", ptoc->name);
+        FATAL_PERROR("fopen", "LOADER: Failed to extract %s: failed to open target file! ", ptoc->name);
         return -1;
     }
 
     /* Open archive (source) file... */
     if (pyi_arch_open_fp(status) != 0) {
-        FATALERROR("Failed to extract %s: failed to open archive file!\n", ptoc->name);
+        FATALERROR("LOADER: Failed to extract %s: failed to open archive file!\n", ptoc->name);
         rc = -1;
         goto cleanup;
     }
     /* ... and seek to the beginning of entry's data */
     if (fseeko(status->fp, status->pkgstart + ptoc->pos, SEEK_SET) < 0) {
-        FATAL_PERROR("fseeko", "Failed to extract %s: failed to seek to the entry's data!\n", ptoc->name);
+        FATAL_PERROR("fseeko", "LOADER: Failed to extract %s: failed to seek to the entry's data! ", ptoc->name);
         rc = -1;
         goto cleanup;
     }
@@ -569,7 +569,7 @@ pyi_arch_open(ARCHIVE_STATUS *status)
 
     /* Load status->cookie */
     if (-1 == pyi_arch_find_cookie(status, search_end)) {
-        VS("Loader: Cannot find cookie");
+        VS("LOADER: Cannot find cookie!\n");
         return -1;
     }
 
@@ -584,19 +584,19 @@ pyi_arch_open(ARCHIVE_STATUS *status)
     status->tocbuff = (TOC *) malloc(status->cookie.TOClen);
 
     if (status->tocbuff == NULL) {
-        FATAL_PERROR("malloc", "Could not allocate buffer for TOC.");
+        FATAL_PERROR("malloc", "LOADER: Could not allocate buffer for TOC! ");
         return -1;
     }
 
     if (fread(status->tocbuff, status->cookie.TOClen, 1, status->fp) < 1) {
-        FATAL_PERROR("fread", "Could not read from file.");
+        FATAL_PERROR("fread", "LOADER: Could not read TOC from archive file! ");
         return -1;
     }
     status->tocend = (TOC *) (((char *)status->tocbuff) + status->cookie.TOClen);
 
     /* Check input file is still ok (should be). */
     if (ferror(status->fp)) {
-        FATALERROR("Error on file\n.");
+        FATALERROR("LOADER: Error on opened archive file!\n");
         return -1;
     }
 
@@ -680,7 +680,7 @@ pyi_arch_status_new() {
     ARCHIVE_STATUS *archive_status;
     archive_status = (ARCHIVE_STATUS *) calloc(1, sizeof(ARCHIVE_STATUS));
     if (archive_status == NULL) {
-        FATAL_PERROR("calloc", "Cannot allocate memory for ARCHIVE_STATUS\n");
+        FATAL_PERROR("calloc", "LOADER: Cannot allocate memory for ARCHIVE_STATUS! ");
     }
     return archive_status;
 }

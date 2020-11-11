@@ -21,6 +21,10 @@
 #include "pyi_global.h"
 #include <stdio.h>  /* FILE */
 
+#if defined(_MSC_VER)
+#include "msvc_stdint.h"  /* int64_t */
+#endif
+
 /* Types of CArchive items. */
 #define ARCHIVE_ITEM_BINARY           'b'  /* binary */
 #define ARCHIVE_ITEM_DEPENDENCY       'd'  /* runtime option */
